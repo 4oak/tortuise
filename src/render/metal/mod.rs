@@ -2,6 +2,7 @@ mod buffers;
 mod error;
 mod pipeline;
 mod render;
+mod render_attempt;
 mod sort;
 mod sync;
 #[cfg(test)]

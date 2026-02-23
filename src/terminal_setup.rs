@@ -24,7 +24,10 @@ pub fn install_panic_hook() {
     }));
 }
 
-pub fn cleanup_terminal(stdout: &mut BufWriter<io::Stdout>) -> AppResult<()> {
+pub fn cleanup_terminal(
+    stdout: &mut BufWriter<io::Stdout>,
+    last_gpu_error: Option<&str>,
+) -> AppResult<()> {
     execute!(
         stdout,
         ResetColor,
@@ -34,5 +37,11 @@ pub fn cleanup_terminal(stdout: &mut BufWriter<io::Stdout>) -> AppResult<()> {
     )?;
     stdout.flush()?;
     crossterm::terminal::disable_raw_mode()?;
+    #[cfg(feature = "metal")]
+    if let Some(err) = last_gpu_error {
+        eprintln!("Last GPU error: {err}");
+    }
+    #[cfg(not(feature = "metal"))]
+    let _ = last_gpu_error;
     Ok(())
 }

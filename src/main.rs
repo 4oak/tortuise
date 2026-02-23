@@ -1,9 +1,10 @@
+use clap::Parser;
 use crossterm::{
     cursor, execute,
     terminal::{self, ClearType, EnterAlternateScreen},
 };
 use std::io::{self, BufWriter, Write};
-use std::path::Path;
+use std::path::PathBuf;
 use std::time::Instant;
 
 mod camera;
@@ -24,66 +25,85 @@ use terminal_setup::{cleanup_terminal, install_panic_hook};
 
 type AppResult<T> = Result<T, Box<dyn std::error::Error>>;
 
-fn load_splats_from_args(args: &[String]) -> AppResult<Vec<splat::Splat>> {
-    let mut input_arg: Option<&str> = None;
-    for arg in args.iter().skip(1) {
-        if arg == "--cpu" || arg == "--metal" || arg == "--flip-y" || arg == "--flip-z" {
-            continue;
-        }
-        input_arg = Some(arg.as_str());
-        break;
+#[derive(Debug, Parser)]
+#[command(name = "gaussian-splat", about = "TUI Gaussian Splatting viewer")]
+struct Cli {
+    input: Option<PathBuf>,
+    #[arg(long, help = "Force CPU rendering")]
+    cpu: bool,
+    #[cfg(feature = "metal")]
+    #[arg(long, help = "Force Metal GPU rendering", conflicts_with = "cpu")]
+    metal: bool,
+    #[arg(long, help = "Flip Y axis")]
+    flip_y: bool,
+    #[arg(long, help = "Flip Z axis")]
+    flip_z: bool,
+    #[arg(long, help = "Run built-in demo scene", conflicts_with = "input")]
+    demo: bool,
+    #[arg(
+        long,
+        value_name = "N",
+        default_value_t = 1,
+        help = "Supersampling factor"
+    )]
+    supersample: u32,
+}
+
+fn load_splats_from_cli(cli: &Cli) -> AppResult<Vec<splat::Splat>> {
+    if cli.demo || cli.input.is_none() {
+        return Ok(demo::generate_demo_splats());
     }
 
-    let Some(path) = input_arg else {
-        return Ok(demo::generate_demo_splats());
+    let path = match cli.input.as_ref() {
+        Some(path) => path,
+        None => return Ok(demo::generate_demo_splats()),
     };
 
-    if path == "--demo" {
-        return Ok(demo::generate_demo_splats());
-    }
-
-    let ext = Path::new(path)
+    let ext = path
         .extension()
         .and_then(|s| s.to_str())
         .unwrap_or("")
         .to_ascii_lowercase();
 
+    let path_str = path.to_str().ok_or_else(|| {
+        format!(
+            "Input path contains non-UTF-8 characters: {}",
+            path.display()
+        )
+    })?;
+
     match ext.as_str() {
-        "ply" => parser::ply::load_ply_file(path),
-        "splat" => parser::dot_splat::load_splat_file(path),
-        _ => Err("Unsupported input. Use a .ply, .splat, or --demo".into()),
+        "ply" => parser::ply::load_ply_file(path_str),
+        "splat" => parser::dot_splat::load_splat_file(path_str),
+        _ => Err(format!(
+            "Unsupported input '{}'. Use a .ply, .splat, or --demo",
+            path.display()
+        )
+        .into()),
     }
 }
 
 fn main() -> AppResult<()> {
     install_panic_hook();
+    let cli = Cli::parse();
 
-    let args: Vec<String> = std::env::args().collect();
-
-    let use_cpu = args.iter().any(|arg| arg == "--cpu");
-    let _use_metal = args.iter().any(|arg| arg == "--metal"); // explicit flag for documentation
-    let flip_y = args.iter().any(|arg| arg == "--flip-y");
-    let flip_z = args.iter().any(|arg| arg == "--flip-z");
-    let backend = if use_cpu {
+    #[cfg(feature = "metal")]
+    let mut backend = if cli.cpu {
         Backend::Cpu
     } else {
-        #[cfg(feature = "metal")]
-        {
-            Backend::Metal
-        }
-        #[cfg(not(feature = "metal"))]
-        {
-            Backend::Cpu
-        }
+        let _force_metal = cli.metal;
+        Backend::Metal
     };
+    #[cfg(not(feature = "metal"))]
+    let backend = Backend::Cpu;
 
-    let mut splats = load_splats_from_args(&args)?;
-    if flip_y || flip_z {
-        for splat in splats.iter_mut() {
-            if flip_y {
+    let mut splats = load_splats_from_cli(&cli)?;
+    if cli.flip_y || cli.flip_z {
+        for splat in &mut splats {
+            if cli.flip_y {
                 splat.position.y = -splat.position.y;
             }
-            if flip_z {
+            if cli.flip_z {
                 splat.position.z = -splat.position.z;
             }
         }
@@ -98,15 +118,23 @@ fn main() -> AppResult<()> {
 
     #[cfg(feature = "metal")]
     let mut metal_backend = if backend == Backend::Metal {
-        Some(render::metal::MetalBackend::new(splats.len())?)
+        match render::metal::MetalBackend::new(splats.len()) {
+            Ok(mut mb) => {
+                mb.upload_splats(&splats)?;
+                Some(mb)
+            }
+            Err(err) => {
+                eprintln!(
+                    "Warning: Metal initialization failed: {}. Falling back to CPU renderer.",
+                    err
+                );
+                backend = Backend::Cpu;
+                None
+            }
+        }
     } else {
         None
     };
-
-    #[cfg(feature = "metal")]
-    if let Some(ref mut mb) = metal_backend {
-        mb.upload_splats(&splats)?;
-    }
 
     let mut app_state = AppState {
         camera,
@@ -130,11 +158,11 @@ fn main() -> AppResult<()> {
         orbit_angle: 0.0,
         orbit_radius: 5.0,
         orbit_height: 0.0,
-        supersample_factor: 1,
+        supersample_factor: cli.supersample.max(1),
         render_mode: RenderMode::Halfblock,
         backend,
         #[cfg(feature = "metal")]
-        metal_backend,
+        metal_backend: metal_backend.take(),
         #[cfg(feature = "metal")]
         last_gpu_error: None,
         #[cfg(feature = "metal")]
@@ -155,7 +183,10 @@ fn main() -> AppResult<()> {
     stdout.flush()?;
 
     let run_result = run_app_loop(&mut app_state, &input_rx, &mut stdout);
-    let cleanup_result = cleanup_terminal(&mut stdout);
+    #[cfg(feature = "metal")]
+    let cleanup_result = cleanup_terminal(&mut stdout, app_state.last_gpu_error.as_deref());
+    #[cfg(not(feature = "metal"))]
+    let cleanup_result = cleanup_terminal(&mut stdout, None);
 
     run_result?;
     cleanup_result

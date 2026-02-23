@@ -1,4 +1,5 @@
 pub mod frame;
+mod frame_halfblock;
 pub mod hud;
 #[cfg(feature = "metal")]
 pub mod metal;

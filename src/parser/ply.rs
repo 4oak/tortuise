@@ -3,7 +3,6 @@ use std::path::Path;
 
 use crate::math::{clamp_u8, quat_normalize, sigmoid, Vec3};
 use crate::splat::Splat;
-
 type AppResult<T> = Result<T, Box<dyn std::error::Error>>;
 
 #[derive(Debug, Clone, Copy)]
@@ -189,7 +188,6 @@ pub fn load_ply_file(path: &str) -> AppResult<Vec<Splat>> {
         let mut have_scale = false;
         let mut rotation = [1.0_f32, 0.0_f32, 0.0_f32, 0.0_f32];
         let mut have_rotation = false;
-
         let mut cursor: usize = 0;
         for prop in &vertex_props {
             let sz = prop.ty.size();
@@ -291,7 +289,6 @@ pub fn load_ply_file(path: &str) -> AppResult<Vec<Splat>> {
         } else {
             [1.0, 0.0, 0.0, 0.0]
         };
-
         splats.push(Splat {
             position: p,
             color,

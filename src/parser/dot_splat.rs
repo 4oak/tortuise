@@ -28,8 +28,9 @@ pub fn load_splat_file(path: &str) -> AppResult<Vec<Splat>> {
         .map_err(|e| format!("failed to read '{}': {}", Path::new(path).display(), e))?;
     if data.len() % RECORD_SIZE != 0 {
         return Err(format!(
-            "Invalid .splat file: size {} is not a multiple of 32 bytes",
-            data.len()
+            "Invalid .splat file: size {} is not a multiple of 32 bytes (expected {} complete records)",
+            data.len(),
+            data.len() / RECORD_SIZE
         )
         .into());
     }

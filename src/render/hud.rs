@@ -38,12 +38,10 @@ pub fn draw_hud(
         "N/A".to_string()
     };
     #[cfg(feature = "metal")]
-    let gpu_status = if app_state.gpu_fallback_active {
-        app_state
-            .last_gpu_error
-            .as_deref()
-            .unwrap_or("GPU disabled")
-            .to_string()
+    let gpu_status = if let Some(err) = app_state.last_gpu_error.as_deref() {
+        format!("ERR:{err}")
+    } else if app_state.gpu_fallback_active {
+        "DISABLED".to_string()
     } else {
         "OK".to_string()
     };

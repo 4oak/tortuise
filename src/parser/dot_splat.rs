@@ -1,4 +1,5 @@
 use std::fs;
+use std::path::Path;
 
 use crate::math::{quat_normalize, Vec3};
 use crate::splat::Splat;
@@ -21,13 +22,24 @@ fn decode_scale_value(v: f32) -> f32 {
 }
 
 pub fn load_splat_file(path: &str) -> AppResult<Vec<Splat>> {
-    let data = fs::read(path)?;
+    const RECORD_SIZE: usize = 32;
+
+    let data = fs::read(path)
+        .map_err(|e| format!("failed to read '{}': {}", Path::new(path).display(), e))?;
+    if data.len() % RECORD_SIZE != 0 {
+        return Err(format!(
+            "Invalid .splat file: size {} is not a multiple of 32 bytes",
+            data.len()
+        )
+        .into());
+    }
+
     if data.len() < 32 {
         return Err("SPLAT parse error: file too small".into());
     }
 
-    let mut splats = Vec::with_capacity(data.len() / 32);
-    for chunk in data.chunks_exact(32) {
+    let mut splats = Vec::with_capacity(data.len() / RECORD_SIZE);
+    for chunk in data.chunks_exact(RECORD_SIZE) {
         let position = read_vec3_f32(&chunk[0..12]);
         let scale_raw = read_vec3_f32(&chunk[12..24]);
         let color = [chunk[24], chunk[25], chunk[26]];

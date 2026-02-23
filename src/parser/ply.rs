@@ -1,4 +1,5 @@
 use std::fs;
+use std::path::Path;
 
 use crate::math::{clamp_u8, quat_normalize, sigmoid, Vec3};
 use crate::splat::Splat;
@@ -79,7 +80,8 @@ fn find_ply_header_end(data: &[u8]) -> Option<usize> {
 }
 
 pub fn load_ply_file(path: &str) -> AppResult<Vec<Splat>> {
-    let data = fs::read(path)?;
+    let data = fs::read(path)
+        .map_err(|e| format!("failed to read '{}': {}", Path::new(path).display(), e))?;
     let header_end = find_ply_header_end(&data).ok_or("PLY parse error: missing end_header")?;
     let header_text = std::str::from_utf8(&data[..header_end])?;
 
@@ -140,12 +142,20 @@ pub fn load_ply_file(path: &str) -> AppResult<Vec<Splat>> {
         return Err("PLY parse error: missing vertex element or properties".into());
     }
 
-    let stride: usize = vertex_props.iter().map(|p| p.ty.size()).sum();
+    let stride: usize = vertex_props.iter().try_fold(0usize, |acc, prop| {
+        acc.checked_add(prop.ty.size())
+            .ok_or("PLY parse error: size overflow computing vertex stride")
+    })?;
     if stride == 0 {
         return Err("PLY parse error: invalid vertex stride".into());
     }
 
-    let needed = header_end + vertex_count * stride;
+    let vertex_bytes = vertex_count
+        .checked_mul(stride)
+        .ok_or("PLY parse error: size overflow computing buffer size")?;
+    let needed = header_end
+        .checked_add(vertex_bytes)
+        .ok_or("PLY parse error: size overflow computing buffer size")?;
     if data.len() < needed {
         return Err(format!(
             "PLY parse error: file truncated (need {needed} bytes, have {})",
@@ -156,8 +166,18 @@ pub fn load_ply_file(path: &str) -> AppResult<Vec<Splat>> {
 
     let mut splats = Vec::with_capacity(vertex_count);
     for i in 0..vertex_count {
-        let base = header_end + i * stride;
-        let chunk = &data[base..base + stride];
+        let vertex_offset = i
+            .checked_mul(stride)
+            .ok_or("PLY parse error: size overflow computing vertex offset")?;
+        let base = header_end
+            .checked_add(vertex_offset)
+            .ok_or("PLY parse error: size overflow computing vertex offset")?;
+        let end = base
+            .checked_add(stride)
+            .ok_or("PLY parse error: size overflow computing vertex offset")?;
+        let chunk = data
+            .get(base..end)
+            .ok_or("PLY parse error: vertex data out of bounds")?;
 
         let mut p = Vec3::ZERO;
         let mut dc = [0.0_f32; 3];
@@ -170,11 +190,17 @@ pub fn load_ply_file(path: &str) -> AppResult<Vec<Splat>> {
         let mut rotation = [1.0_f32, 0.0_f32, 0.0_f32, 0.0_f32];
         let mut have_rotation = false;
 
-        let mut cursor = 0;
+        let mut cursor: usize = 0;
         for prop in &vertex_props {
             let sz = prop.ty.size();
-            let value = prop.ty.read_as_f32(&chunk[cursor..cursor + sz]);
-            cursor += sz;
+            let field_end = cursor
+                .checked_add(sz)
+                .ok_or("PLY parse error: size overflow computing property offset")?;
+            let field = chunk
+                .get(cursor..field_end)
+                .ok_or("PLY parse error: property data out of bounds")?;
+            let value = prop.ty.read_as_f32(field);
+            cursor = field_end;
 
             match prop.name.as_str() {
                 "x" => p.x = value,

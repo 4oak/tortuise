@@ -239,7 +239,14 @@ pub fn run_single_render_attempt(
     )?;
 
     let total_overlaps = read_shared_u32(&backend.total_overlaps_buffer);
-    let dispatch_overlaps = sort_capacity_u32;
+    if total_overlaps > sort_capacity_u32 {
+        return Ok(RenderAttemptResult {
+            overflow_flag: 1,
+            total_overlaps,
+        });
+    }
+
+    let dispatch_overlaps = total_overlaps;
 
     if dispatch_overlaps > 0 {
         let sort_num_blocks = div_ceil_u32(dispatch_overlaps, THREADS_PER_GROUP_1D);

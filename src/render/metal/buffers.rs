@@ -83,21 +83,22 @@ impl MetalBackend {
         actual_overlaps: usize,
     ) -> Result<(), MetalRenderError> {
         if self.sort_capacity <= 1 {
-            self.sort_under_utilized_frames = 0;
+            self.frames_below_threshold = 0;
             return Ok(());
         }
 
-        if actual_overlaps.saturating_mul(2) < self.sort_capacity {
-            self.sort_under_utilized_frames = self.sort_under_utilized_frames.saturating_add(1);
-            if self.sort_under_utilized_frames >= 60 {
+        let shrink_threshold = self.sort_capacity / 2;
+        if actual_overlaps < shrink_threshold {
+            self.frames_below_threshold = self.frames_below_threshold.saturating_add(1);
+            if self.frames_below_threshold >= 60 {
                 let new_capacity = (self.sort_capacity / 2).max(1);
                 if actual_overlaps <= new_capacity {
                     self.reallocate_sort_buffers(new_capacity)?;
                 }
-                self.sort_under_utilized_frames = 0;
+                self.frames_below_threshold = 0;
             }
         } else {
-            self.sort_under_utilized_frames = 0;
+            self.frames_below_threshold = 0;
         }
 
         Ok(())

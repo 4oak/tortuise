@@ -113,7 +113,7 @@ impl MetalBackend {
             overflow_flag_buffer,
             last_render_width: 0,
             last_render_height: 0,
-            sort_under_utilized_frames: 0,
+            frames_below_threshold: 0,
             gpu_disabled: false,
         })
     }

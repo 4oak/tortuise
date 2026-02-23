@@ -55,7 +55,7 @@ pub struct MetalBackend {
     pub(super) overflow_flag_buffer: Buffer,
     pub(super) last_render_width: usize,
     pub(super) last_render_height: usize,
-    pub(super) sort_under_utilized_frames: u32,
+    pub(super) frames_below_threshold: u32,
     pub(super) gpu_disabled: bool,
 }
 

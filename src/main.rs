@@ -98,7 +98,7 @@ fn main() -> AppResult<()> {
 
     #[cfg(feature = "metal")]
     let mut metal_backend = if backend == Backend::Metal {
-        Some(render::metal::MetalBackend::new(1_000_000)?)
+        Some(render::metal::MetalBackend::new(splats.len())?)
     } else {
         None
     };

@@ -1,6 +1,5 @@
 use crossterm::{
-    cursor,
-    queue,
+    cursor, queue,
     style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
     terminal,
 };
@@ -8,10 +7,12 @@ use std::io::{self, Write};
 use std::time::Instant;
 
 #[cfg(feature = "metal")]
-use crate::sort::sort_by_depth;
-#[cfg(feature = "metal")]
 use super::Backend;
-use super::{AppState, AppResult, RenderMode, HALF_BLOCK, FRAME_TARGET};
+use super::{AppResult, AppState, RenderMode, FRAME_TARGET, HALF_BLOCK};
+
+/// Halfblock mode emits ~40 bytes/cell; cap at 30 FPS (~33 ms) to avoid
+/// overwhelming the terminal's input buffer with ~400 KB/frame.
+const HALFBLOCK_FRAME_TARGET: std::time::Duration = std::time::Duration::from_millis(33);
 
 pub fn sync_orbit_from_camera(app_state: &mut AppState) {
     let radius_xz = (app_state.camera.position.x * app_state.camera.position.x
@@ -60,46 +61,23 @@ pub fn render_frame(
             super::pipeline::clear_framebuffer(&mut app_state.render_state);
 
             #[cfg(feature = "metal")]
-            {
-                let mut used_metal = false;
-                if app_state.backend == Backend::Metal {
-                    if let Some(ref mut metal_backend) = app_state.metal_backend {
-                        if metal_backend.is_ready() {
-                            if let Ok(mut projected) = metal_backend.project(
-                                &app_state.camera,
-                                ss_width,
-                                ss_height,
-                                app_state.splats.len(),
-                            ) {
-                                // GPU projected, CPU sorts (radix sort is faster
-                                // than GPU bitonic sort due to dispatch overhead)
-                                sort_by_depth(&mut projected);
-                                app_state.visible_splat_count = projected.len();
-                                app_state.projected_splats = projected;
-                                used_metal = true;
-                            }
-                        }
-                    }
-                }
-
-                if !used_metal {
-                    super::pipeline::cpu_project_and_sort(app_state, ss_width, ss_height);
-                }
-            }
-
+            let gpu_rendered = if app_state.backend == Backend::Metal {
+                gpu_render_to_framebuffer(app_state, ss_width, ss_height)
+            } else {
+                false
+            };
             #[cfg(not(feature = "metal"))]
-            {
-                super::pipeline::cpu_project_and_sort(app_state, ss_width, ss_height);
-            }
+            let gpu_rendered = false;
 
-            // Always use CPU rasterizer (bounding-box per-splat is faster
-            // than the GPU's naive per-pixel-all-splats approach)
-            super::rasterizer::rasterize_splats(
-                &app_state.projected_splats,
-                &mut app_state.render_state,
-                ss_width,
-                ss_height,
-            );
+            if !gpu_rendered {
+                super::pipeline::cpu_project_and_sort(app_state, ss_width, ss_height);
+                super::rasterizer::rasterize_splats(
+                    &app_state.projected_splats,
+                    &mut app_state.render_state,
+                    ss_width,
+                    ss_height,
+                );
+            }
 
             let cells = if ss == 1 {
                 // Fast path: 1x supersampling -- directly map pairs of pixel rows.
@@ -180,36 +158,10 @@ pub fn render_frame(
             let proj_w = term_cols;
             let proj_h = term_rows * 2;
 
-            #[cfg(feature = "metal")]
-            {
-                let mut used_metal = false;
-                if app_state.backend == Backend::Metal {
-                    if let Some(ref mut metal_backend) = app_state.metal_backend {
-                        if metal_backend.is_ready() {
-                            if let Ok(mut projected) = metal_backend.project(
-                                &app_state.camera,
-                                proj_w,
-                                proj_h,
-                                app_state.splats.len(),
-                            ) {
-                                sort_by_depth(&mut projected);
-                                app_state.visible_splat_count = projected.len();
-                                app_state.projected_splats = projected;
-                                used_metal = true;
-                            }
-                        }
-                    }
-                }
-
-                if !used_metal {
-                    super::pipeline::cpu_project_and_sort(app_state, proj_w, proj_h);
-                }
-            }
-
-            #[cfg(not(feature = "metal"))]
-            {
-                super::pipeline::cpu_project_and_sort(app_state, proj_w, proj_h);
-            }
+            // Non-halfblock modes work with projected splats directly;
+            // the full GPU rasterize pipeline is only beneficial for halfblock.
+            // CPU project+sort is used for all character-based modes.
+            super::pipeline::cpu_project_and_sort(app_state, proj_w, proj_h);
 
             match app_state.render_mode {
                 RenderMode::PointCloud => super::modes::point_cloud::render_point_cloud(
@@ -265,7 +217,60 @@ pub fn render_frame(
     stdout.flush()
 }
 
-pub fn run_app_loop(app_state: &mut AppState, stdout: &mut io::BufWriter<io::Stdout>) -> AppResult<()> {
+/// Run the full GPU tile-based pipeline and write results into RenderState.
+/// Returns `true` if the GPU path was used, `false` if it was unavailable.
+#[cfg(feature = "metal")]
+fn gpu_render_to_framebuffer(
+    app_state: &mut AppState,
+    width: usize,
+    height: usize,
+) -> bool {
+    let metal_backend = match app_state.metal_backend {
+        Some(ref mut mb) => mb,
+        None => return false,
+    };
+
+    if !metal_backend.is_ready() {
+        return false;
+    }
+
+    if let Err(_e) = metal_backend.render(
+        &app_state.camera,
+        width,
+        height,
+        app_state.splats.len(),
+    ) {
+        // Silently fall back to CPU -- eprintln! would corrupt the TUI display.
+        return false;
+    }
+    let packed = metal_backend.framebuffer_slice();
+
+    // Unpack RGBA u32 into RenderState framebuffer ([u8; 3]) and alpha_buffer.
+    let rs = &mut app_state.render_state;
+    let pixel_count = width.saturating_mul(height);
+
+    if packed.len() >= pixel_count {
+        for (i, &p) in packed.iter().enumerate().take(pixel_count) {
+            rs.framebuffer[i] = [
+                (p & 0xFF) as u8,
+                ((p >> 8) & 0xFF) as u8,
+                ((p >> 16) & 0xFF) as u8,
+            ];
+            rs.alpha_buffer[i] = ((p >> 24) & 0xFF) as f32 / 255.0;
+        }
+    }
+
+    // GPU pipeline handles projection+sort+rasterize in one shot.
+    // We don't get a per-splat visible count from GPU render,
+    // but report total splat count for the HUD.
+    app_state.visible_splat_count = app_state.splats.len();
+    true
+}
+
+pub fn run_app_loop(
+    app_state: &mut AppState,
+    stdout: &mut io::BufWriter<io::Stdout>,
+) -> AppResult<()> {
     loop {
         let frame_start = Instant::now();
 
@@ -297,8 +302,13 @@ pub fn run_app_loop(app_state: &mut AppState, stdout: &mut io::BufWriter<io::Std
         };
 
         let spent = frame_start.elapsed();
-        if spent < FRAME_TARGET {
-            std::thread::sleep(FRAME_TARGET - spent);
+        let target = if app_state.render_mode == RenderMode::Halfblock {
+            HALFBLOCK_FRAME_TARGET
+        } else {
+            FRAME_TARGET
+        };
+        if spent < target {
+            std::thread::sleep(target - spent);
         }
     }
 

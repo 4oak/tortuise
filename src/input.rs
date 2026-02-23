@@ -1,8 +1,8 @@
-use crossterm::event::{self, Event, KeyCode, KeyEventKind};
-use std::time::Duration;
 use crate::camera;
 use crate::render::frame::sync_orbit_from_camera;
 use crate::render::{AppState, RenderMode};
+use crossterm::event::{self, Event, KeyCode, KeyEventKind};
+use std::time::Duration;
 
 pub type AppResult<T> = Result<T, Box<dyn std::error::Error>>;
 

@@ -18,8 +18,8 @@ mod terminal_setup;
 
 use camera::Camera;
 use math::Vec3;
+use render::frame::{run_app_loop, sync_orbit_from_camera};
 use render::{AppState, Backend, RenderMode, RenderState};
-use render::frame::{sync_orbit_from_camera, run_app_loop};
 use terminal_setup::{cleanup_terminal, install_panic_hook};
 
 type AppResult<T> = Result<T, Box<dyn std::error::Error>>;
@@ -27,7 +27,7 @@ type AppResult<T> = Result<T, Box<dyn std::error::Error>>;
 fn load_splats_from_args(args: &[String]) -> AppResult<Vec<splat::Splat>> {
     let mut input_arg: Option<&str> = None;
     for arg in args.iter().skip(1) {
-        if arg == "--cpu" || arg == "--flip-y" || arg == "--flip-z" {
+        if arg == "--cpu" || arg == "--metal" || arg == "--flip-y" || arg == "--flip-z" {
             continue;
         }
         input_arg = Some(arg.as_str());
@@ -61,6 +61,7 @@ fn main() -> AppResult<()> {
     let args: Vec<String> = std::env::args().collect();
 
     let use_cpu = args.iter().any(|arg| arg == "--cpu");
+    let _use_metal = args.iter().any(|arg| arg == "--metal"); // explicit flag for documentation
     let flip_y = args.iter().any(|arg| arg == "--flip-y");
     let flip_z = args.iter().any(|arg| arg == "--flip-z");
     let backend = if use_cpu {
@@ -137,7 +138,7 @@ fn main() -> AppResult<()> {
     sync_orbit_from_camera(&mut app_state);
 
     crossterm::terminal::enable_raw_mode()?;
-    let mut stdout = BufWriter::with_capacity(64 * 1024, io::stdout());
+    let mut stdout = BufWriter::with_capacity(1024 * 1024, io::stdout());
 
     execute!(
         stdout,

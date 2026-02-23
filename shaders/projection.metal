@@ -19,6 +19,13 @@ struct CameraData {
     float near_plane, far_plane;
 };
 
+struct TileConfig {
+    uint tile_count_x;
+    uint tile_count_y;
+    uint screen_width;
+    uint screen_height;
+};
+
 struct ProjectedSplat {
     float screen_x, screen_y, depth;
     float radius_x, radius_y;
@@ -26,6 +33,8 @@ struct ProjectedSplat {
     float opacity;
     uint packed_color;
     uint original_index;
+    uint tile_min; // packed: (tile_min_y << 16) | tile_min_x
+    uint tile_max; // packed: (tile_max_y << 16) | tile_max_x
 };
 
 // All matrices stored as row-major float arrays: m[row][col]
@@ -169,6 +178,7 @@ kernel void project_splats(
     device atomic_uint* valid_count [[buffer(2)]],
     constant CameraData& camera [[buffer(3)]],
     constant uint& splat_count [[buffer(4)]],
+    constant TileConfig& tile_config [[buffer(5)]],
     uint index [[thread_position_in_grid]]
 ) {
     if (index >= splat_count) {
@@ -225,6 +235,20 @@ kernel void project_splats(
         return;
     }
 
+    // Compute tile bounds for this splat
+    float splat_min_x = max(screen_x - extent.x, 0.0f);
+    float splat_min_y = max(screen_y - extent.y, 0.0f);
+    float splat_max_x = min(screen_x + extent.x, float(tile_config.screen_width - 1));
+    float splat_max_y = min(screen_y + extent.y, float(tile_config.screen_height - 1));
+
+    uint tile_min_x = uint(splat_min_x) / 16;  // TILE_SIZE = 16
+    uint tile_min_y = uint(splat_min_y) / 16;
+    uint tile_max_x = min(uint(splat_max_x) / 16, tile_config.tile_count_x - 1);
+    uint tile_max_y = min(uint(splat_max_y) / 16, tile_config.tile_count_y - 1);
+
+    uint packed_tile_min = (tile_min_y << 16) | tile_min_x;
+    uint packed_tile_max = (tile_max_y << 16) | tile_max_x;
+
     // Final screen bounds check
     if (screen_x + extent.x < 0.0 || screen_x - extent.x > (camera.half_w * 2.0) ||
         screen_y + extent.y < 0.0 || screen_y - extent.y > (camera.half_h * 2.0)) {
@@ -240,6 +264,8 @@ kernel void project_splats(
         cov_2d.x, cov_2d.y, cov_2d.z,
         splat.opacity,
         splat.packed_color,
-        index
+        index,
+        packed_tile_min,
+        packed_tile_max
     };
 }

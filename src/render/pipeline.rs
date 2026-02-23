@@ -1,11 +1,10 @@
-use rayon::prelude::*;
 use crate::camera::Camera;
 use crate::sort::sort_by_depth;
 use crate::splat::{
-    compute_2d_gaussian_extent, compute_3d_covariance,
-    invert_2x2_covariance, project_covariance_to_2d, ProjectedSplat, Splat,
-    MIN_SPLAT_RADIUS,
+    compute_2d_gaussian_extent, compute_3d_covariance, invert_2x2_covariance,
+    project_covariance_to_2d, ProjectedSplat, Splat, MIN_SPLAT_RADIUS,
 };
+use rayon::prelude::*;
 
 // --- Framebuffer ---
 
@@ -71,8 +70,7 @@ pub fn project_and_cull_splats(
             }
 
             let cov_3d = compute_3d_covariance(splat.scale, splat.rotation);
-            let (cov_a, cov_b, cov_c) =
-                project_covariance_to_2d(cov_3d, camera, view_pos, fx, fy);
+            let (cov_a, cov_b, cov_c) = project_covariance_to_2d(cov_3d, camera, view_pos, fx, fy);
 
             if cov_a <= 0.0 || cov_c <= 0.0 {
                 return None;
@@ -91,8 +89,7 @@ pub fn project_and_cull_splats(
                 return None;
             }
 
-            let (inv_cov_a, inv_cov_b, inv_cov_c) =
-                invert_2x2_covariance(cov_a, cov_b, cov_c)?;
+            let (inv_cov_a, inv_cov_b, inv_cov_c) = invert_2x2_covariance(cov_a, cov_b, cov_c)?;
 
             Some(ProjectedSplat {
                 screen_x,

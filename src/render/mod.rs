@@ -1,10 +1,10 @@
-pub mod pipeline;
-pub mod rasterizer;
-pub mod hud;
 pub mod frame;
-pub mod modes;
+pub mod hud;
 #[cfg(feature = "metal")]
 pub mod metal;
+pub mod modes;
+pub mod pipeline;
+pub mod rasterizer;
 
 use std::time::Instant;
 

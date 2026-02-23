@@ -1,9 +1,9 @@
-pub mod halfblock;
-pub mod point_cloud;
-pub mod matrix;
+pub mod ascii;
 pub mod block_density;
 pub mod braille;
-pub mod ascii;
+pub mod halfblock;
+pub mod matrix;
+pub mod point_cloud;
 
 pub const POINT_CLOUD_CHARS: &[char] = &[
     '.', '\u{00B7}', '\u{2218}', '\u{25CB}', '\u{25CF}', '\u{25C9}', '\u{2605}', '\u{2726}',

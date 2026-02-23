@@ -1,9 +1,12 @@
-use crossterm::{cursor, queue, style::{Color, Print, SetBackgroundColor, SetForegroundColor}};
-use rayon::prelude::*;
-use std::io::{self, Write};
+use super::{depth_attenuation, is_hud_overlay_row};
 use crate::math::clamp_u8;
 use crate::splat::{evaluate_2d_gaussian, ProjectedSplat};
-use super::{depth_attenuation, is_hud_overlay_row};
+use crossterm::{
+    cursor, queue,
+    style::{Color, Print, SetBackgroundColor, SetForegroundColor},
+};
+use rayon::prelude::*;
+use std::io::{self, Write};
 
 // --- Braille ---
 
@@ -127,9 +130,8 @@ pub fn render_braille(
                     for bx in min_bx..=max_bx {
                         let dx_proj = (bx as f32 + 0.5 - center_bx) * inv_bscale_x;
 
-                        let gaussian = evaluate_2d_gaussian(
-                            dx_proj, dy_proj, inv_cov_a, inv_cov_b, inv_cov_c,
-                        );
+                        let gaussian =
+                            evaluate_2d_gaussian(dx_proj, dy_proj, inv_cov_a, inv_cov_b, inv_cov_c);
 
                         if gaussian * splat.opacity < BRAILLE_ALPHA_THRESHOLD {
                             continue;

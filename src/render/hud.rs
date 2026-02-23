@@ -1,6 +1,5 @@
 use crossterm::{
-    cursor,
-    queue,
+    cursor, queue,
     style::{Color, Print, SetBackgroundColor, SetForegroundColor},
 };
 use std::io::{self, Write};

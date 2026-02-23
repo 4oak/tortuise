@@ -1,9 +1,12 @@
-use crossterm::{cursor, queue, style::{Color, Print, SetBackgroundColor, SetForegroundColor}};
-use rayon::prelude::*;
-use std::io::{self, Write};
+use super::{depth_attenuation, is_hud_overlay_row, BLOCK_DENSITY_CHARS};
 use crate::math::clamp_u8;
 use crate::splat::ProjectedSplat;
-use super::{depth_attenuation, is_hud_overlay_row, BLOCK_DENSITY_CHARS};
+use crossterm::{
+    cursor, queue,
+    style::{Color, Print, SetBackgroundColor, SetForegroundColor},
+};
+use rayon::prelude::*;
+use std::io::{self, Write};
 
 // --- Block Density ---
 
@@ -25,8 +28,9 @@ pub fn render_block_density(
     let num_threads = rayon::current_num_threads();
     let band_rows = term_rows.div_ceil(num_threads);
 
-    let ao_chunks: Vec<&mut [f32]> =
-        accumulated_opacity.chunks_mut(band_rows * term_cols).collect();
+    let ao_chunks: Vec<&mut [f32]> = accumulated_opacity
+        .chunks_mut(band_rows * term_cols)
+        .collect();
     let wr_chunks: Vec<&mut [f32]> = weighted_r.chunks_mut(band_rows * term_cols).collect();
     let wg_chunks: Vec<&mut [f32]> = weighted_g.chunks_mut(band_rows * term_cols).collect();
     let wb_chunks: Vec<&mut [f32]> = weighted_b.chunks_mut(band_rows * term_cols).collect();

@@ -1,6 +1,8 @@
-use rayon::prelude::*;
 use crate::math::clamp_u8;
-use crate::splat::{evaluate_2d_gaussian, ProjectedSplat, MIN_GAUSSIAN_CONTRIBUTION, SATURATION_EPSILON};
+use crate::splat::{
+    evaluate_2d_gaussian, ProjectedSplat, MIN_GAUSSIAN_CONTRIBUTION, SATURATION_EPSILON,
+};
+use rayon::prelude::*;
 
 // --- Rasterizer ---
 

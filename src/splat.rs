@@ -1,7 +1,5 @@
 use crate::camera::Camera;
-use crate::math::{
-    mat3_mul, mat3_transpose, quat_to_rotation_matrix, Vec3,
-};
+use crate::math::{mat3_mul, mat3_transpose, quat_to_rotation_matrix, Vec3};
 
 pub const GAUSSIAN_SIGMA_CUTOFF: f32 = 4.0;
 pub const MIN_SPLAT_RADIUS: f32 = 0.3;
@@ -107,7 +105,13 @@ pub fn invert_2x2_covariance(cov_a: f32, cov_b: f32, cov_c: f32) -> Option<(f32,
     Some((cov_c * inv_det, -cov_b * inv_det, cov_a * inv_det))
 }
 
-pub fn evaluate_2d_gaussian(dx: f32, dy: f32, inv_cov_a: f32, inv_cov_b: f32, inv_cov_c: f32) -> f32 {
+pub fn evaluate_2d_gaussian(
+    dx: f32,
+    dy: f32,
+    inv_cov_a: f32,
+    inv_cov_b: f32,
+    inv_cov_c: f32,
+) -> f32 {
     let q = dx * dx * inv_cov_a + 2.0 * dx * dy * inv_cov_b + dy * dy * inv_cov_c;
     // 4-sigma: cutoff at q = 2*(4^2) = 32
     if q > 32.0 {

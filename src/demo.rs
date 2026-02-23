@@ -1,7 +1,7 @@
-use rand::Rng;
-use std::f32::consts::TAU;
 use crate::math::{clamp_u8, hsv_to_rgb, Vec3};
 use crate::splat::Splat;
+use rand::Rng;
+use std::f32::consts::TAU;
 
 // --- Demo splat generators ---
 

@@ -1,9 +1,12 @@
-use crossterm::{cursor, queue, style::{Color, Print, SetBackgroundColor, SetForegroundColor}};
-use rayon::prelude::*;
-use std::io::{self, Write};
+use super::{depth_attenuation, is_hud_overlay_row, POINT_CLOUD_CHARS};
 use crate::math::clamp_u8;
 use crate::splat::ProjectedSplat;
-use super::{depth_attenuation, is_hud_overlay_row, POINT_CLOUD_CHARS};
+use crossterm::{
+    cursor, queue,
+    style::{Color, Print, SetBackgroundColor, SetForegroundColor},
+};
+use rayon::prelude::*;
+use std::io::{self, Write};
 
 // --- Point Cloud ---
 

@@ -129,7 +129,7 @@ fn main() -> AppResult<()> {
         orbit_angle: 0.0,
         orbit_radius: 5.0,
         orbit_height: 0.0,
-        supersample_factor: 2,
+        supersample_factor: 1,
         render_mode: RenderMode::Halfblock,
         backend,
         #[cfg(feature = "metal")]

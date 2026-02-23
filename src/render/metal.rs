@@ -346,8 +346,8 @@ impl MetalBackend {
         let tile_count_x = div_ceil_u32(screen_width_u32, TILE_SIZE).max(1);
         let tile_count_y = div_ceil_u32(screen_height_u32, TILE_SIZE).max(1);
         let num_tiles_u64 = u64::from(tile_count_x) * u64::from(tile_count_y);
-        if num_tiles_u64 > 65535 {
-            return Err("Tile count exceeds 16-bit tile_id encoding".into());
+        if num_tiles_u64 > 1023 {
+            return Err("Tile count exceeds 10-bit tile_id encoding (max 1023 tiles)".into());
         }
         let num_tiles = usize::try_from(num_tiles_u64).map_err(|_| "tile count overflow")?;
 
@@ -1242,7 +1242,7 @@ mod tests {
         assert_eq!(gpu_rgb.len(), width * height);
         assert_eq!(cpu_rgb.len(), width * height);
 
-        // GPU uses 16-bit depth quantization for tile sorting and inverts covariance
+        // GPU uses 18-bit depth quantization for tile sorting and inverts covariance
         // per-pixel rather than pre-inverting. This causes ordering differences for
         // closely-spaced splats, which can produce larger pixel-level differences.
         // Tolerance: each channel within +/-8, up to 20% of pixels allowed to exceed.
@@ -1408,5 +1408,47 @@ mod tests {
         eprintln!("  Avg frame:   {:.3} ms", avg_frame_ms);
         eprintln!("  Throughput:  {:.1} FPS", fps);
         eprintln!("==============================");
+    }
+
+    /// Verify that identical camera + splats produce bitwise-identical framebuffers
+    /// across multiple renders.  This is the regression test for the sort-key
+    /// determinism fix (10-bit tile + 18-bit depth + 4-bit tiebreaker).
+    #[test]
+    fn test_render_determinism() {
+        let _guard = match setup_metal_test() {
+            Some(g) => g,
+            None => return,
+        };
+
+        let width = 128usize;
+        let height = 128usize;
+        let camera = make_test_camera();
+        // Use enough splats to trigger depth collisions in the old 16-bit key.
+        let splats = generate_seeded_splats(500, 0xD3AD_BEEF);
+
+        let mut backend =
+            MetalBackend::new(splats.len()).expect("MetalBackend::new should succeed");
+        backend
+            .upload_splats(&splats)
+            .expect("upload_splats should succeed");
+
+        // Render once to establish the reference framebuffer.
+        backend
+            .render(&camera, width, height, splats.len())
+            .expect("first render should succeed");
+        let reference = backend.framebuffer_slice().to_vec();
+
+        // Render 9 more times and assert bitwise equality every frame.
+        for frame in 1..10 {
+            backend
+                .render(&camera, width, height, splats.len())
+                .expect("render should succeed");
+            let current = backend.framebuffer_slice().to_vec();
+            assert_eq!(
+                reference, current,
+                "frame {} differs from reference -- sort is non-deterministic",
+                frame
+            );
+        }
     }
 }

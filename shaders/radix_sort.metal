@@ -52,7 +52,7 @@ kernel void radix_sort_scatter(
     constant uint* values_in [[buffer(1)]],
     device uint* keys_out [[buffer(2)]],
     device uint* values_out [[buffer(3)]],
-    constant uint* histograms [[buffer(4)]], // Prefix-scanned per-digit, per-block offsets.
+    constant uint* histograms [[buffer(4)]],
     device const uint& num_elements [[buffer(5)]],
     constant uint& bit_offset [[buffer(6)]],
     uint gid [[thread_position_in_grid]],
@@ -61,36 +61,23 @@ kernel void radix_sort_scatter(
 ) {
     uint num_blocks = (num_elements + kBlockSize - 1u) / kBlockSize;
 
-    // Guard: dispatch may have more threadgroups than actual num_blocks.
     if (block_id >= num_blocks) {
         return;
     }
 
-    // Local per-block per-digit counters used to get stable local rank in each bucket.
     threadgroup atomic_uint local_histogram[kRadixBuckets];
-
     atomic_store_explicit(&local_histogram[ltid], 0u, memory_order_relaxed);
-    threadgroup_barrier(mem_flags::mem_threadgroup);
-
-    uint key = 0u;
-    uint value = 0u;
-    uint digit = 0u;
-    uint local_rank = 0u;
-
-    if (gid < num_elements) {
-        key = keys_in[gid];
-        value = values_in[gid];
-        digit = (key >> bit_offset) & kRadixMask;
-
-        // Rank among keys in this block that share the same digit.
-        local_rank = atomic_fetch_add_explicit(&local_histogram[digit], 1u, memory_order_relaxed);
-    }
-
     threadgroup_barrier(mem_flags::mem_threadgroup);
 
     if (gid >= num_elements) {
         return;
     }
+
+    uint key = keys_in[gid];
+    uint value = values_in[gid];
+    uint digit = (key >> bit_offset) & kRadixMask;
+
+    uint local_rank = atomic_fetch_add_explicit(&local_histogram[digit], 1u, memory_order_relaxed);
 
     uint base_offset = histograms[digit * num_blocks + block_id];
     uint out_index = base_offset + local_rank;

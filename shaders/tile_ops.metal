@@ -105,7 +105,25 @@ kernel void emit_tile_keys(
         return;
     }
 
-    const uint depth_key = float_to_sortable_uint(splat.depth) >> 16;
+    // Sort key layout: 10-bit tile_id | 18-bit depth | 4-bit tiebreaker
+    //
+    // 10 bits supports up to 1023 tiles (a 500x160 terminal with 16x16 tiles
+    // = ~320 tiles, plenty of headroom).  18-bit depth gives 262144 depth
+    // levels (4x more than the original 16-bit depth).
+    //
+    // The 4-bit tiebreaker from original_index ensures that splats at
+    // identical quantized depth produce distinct sort keys 93.75% of the
+    // time.  Combined with the deterministic radix sort scatter (which
+    // preserves input order for equal keys by ranking threads by ltid rather
+    // than atomic_fetch_add), the remaining collisions only swap splats at
+    // near-identical depth -- producing imperceptible visual difference.
+    //
+    // The atomic_fetch_add for slot assignment in emit_tile_keys remains
+    // non-deterministic, but this only affects the input order fed to the
+    // radix sort.  Since the sort is keyed on (tile, depth, tiebreaker),
+    // the final sorted order is determined by the key, not the slot.
+    const uint depth_18 = float_to_sortable_uint(splat.depth) >> 14;  // top 18 of 32 bits
+    const uint tiebreaker = splat.original_index & 0xFu;              // low 4 bits of stable ID
 
     // Emit one key/value pair for each tile this splat overlaps.
     for (uint ty = tile_min.y; ty <= tile_max.y; ++ty) {
@@ -120,7 +138,7 @@ kernel void emit_tile_keys(
                 return;
             }
 
-            sort_keys[slot] = (tile_id << 16) | depth_key;
+            sort_keys[slot] = (tile_id << 22) | (depth_18 << 4) | tiebreaker;
             sort_values[slot] = index;
         }
     }

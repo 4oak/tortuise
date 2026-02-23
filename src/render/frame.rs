@@ -269,13 +269,14 @@ fn gpu_render_to_framebuffer(
 
 pub fn run_app_loop(
     app_state: &mut AppState,
+    input_rx: &crate::input::thread::InputReceiver,
     stdout: &mut io::BufWriter<io::Stdout>,
 ) -> AppResult<()> {
     loop {
         let frame_start = Instant::now();
 
         // Drain all pending input events -- never skip
-        if crate::input::process_input_events(app_state)? {
+        if crate::input::drain_input_events(app_state, input_rx)? {
             break;
         }
 
@@ -289,6 +290,7 @@ pub fn run_app_loop(
         if app_state.auto_orbit {
             update_auto_orbit(app_state, delta_time);
         }
+        crate::input::state::apply_movement_from_held_keys(app_state, delta_time);
 
         let terminal_size = terminal::size()?;
         render_frame(app_state, terminal_size, stdout)?;

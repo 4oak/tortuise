@@ -119,6 +119,7 @@ fn main() -> AppResult<()> {
             width,
             height,
         },
+        input_state: input::state::InputState::default(),
         show_hud: true,
         auto_orbit: false,
         move_speed: 0.30,
@@ -138,6 +139,7 @@ fn main() -> AppResult<()> {
     sync_orbit_from_camera(&mut app_state);
 
     crossterm::terminal::enable_raw_mode()?;
+    let input_rx = input::thread::spawn_input_thread();
     let mut stdout = BufWriter::with_capacity(1024 * 1024, io::stdout());
 
     execute!(
@@ -148,7 +150,7 @@ fn main() -> AppResult<()> {
     )?;
     stdout.flush()?;
 
-    let run_result = run_app_loop(&mut app_state, &mut stdout);
+    let run_result = run_app_loop(&mut app_state, &input_rx, &mut stdout);
     let cleanup_result = cleanup_terminal(&mut stdout);
 
     run_result?;

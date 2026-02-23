@@ -82,6 +82,7 @@ pub struct AppState {
     pub splats: Vec<Splat>,
     pub projected_splats: Vec<ProjectedSplat>,
     pub render_state: RenderState,
+    pub input_state: crate::input::state::InputState,
     pub show_hud: bool,
     pub auto_orbit: bool,
     pub move_speed: f32,

@@ -42,10 +42,22 @@ pub fn handle_input_event(app_state: &mut AppState, event: Event) -> AppResult<(
                         KeyEventKind::Press | KeyEventKind::Repeat | KeyEventKind::Release
                     ) {
                         match lc {
-                            'w' => app_state.input_state.held.forward = key_event.kind != KeyEventKind::Release,
-                            's' => app_state.input_state.held.back = key_event.kind != KeyEventKind::Release,
-                            'a' => app_state.input_state.held.left = key_event.kind != KeyEventKind::Release,
-                            'd' => app_state.input_state.held.right = key_event.kind != KeyEventKind::Release,
+                            'w' => {
+                                app_state.input_state.held.forward =
+                                    key_event.kind != KeyEventKind::Release
+                            }
+                            's' => {
+                                app_state.input_state.held.back =
+                                    key_event.kind != KeyEventKind::Release
+                            }
+                            'a' => {
+                                app_state.input_state.held.left =
+                                    key_event.kind != KeyEventKind::Release
+                            }
+                            'd' => {
+                                app_state.input_state.held.right =
+                                    key_event.kind != KeyEventKind::Release
+                            }
                             _ => {}
                         }
                     }
@@ -117,11 +129,7 @@ mod tests {
 
     fn make_state() -> AppState {
         AppState {
-            camera: Camera::new(
-                Vec3::new(0.0, 0.0, 5.0),
-                -std::f32::consts::FRAC_PI_2,
-                0.0,
-            ),
+            camera: Camera::new(Vec3::new(0.0, 0.0, 5.0), -std::f32::consts::FRAC_PI_2, 0.0),
             splats: Vec::new(),
             projected_splats: Vec::new(),
             render_state: RenderState {
@@ -147,6 +155,10 @@ mod tests {
             backend: Backend::Cpu,
             #[cfg(feature = "metal")]
             metal_backend: None,
+            #[cfg(feature = "metal")]
+            last_gpu_error: None,
+            #[cfg(feature = "metal")]
+            gpu_fallback_active: false,
         }
     }
 
@@ -177,11 +189,17 @@ mod tests {
     fn drain_consumes_all_queued_events() {
         let (tx, rx) = mpsc::channel();
         tx.send(crate::input::thread::InputMessage::Event(Event::Key(
-            crossterm::event::KeyEvent::new(KeyCode::Char('w'), crossterm::event::KeyModifiers::NONE),
+            crossterm::event::KeyEvent::new(
+                KeyCode::Char('w'),
+                crossterm::event::KeyModifiers::NONE,
+            ),
         )))
         .expect("send w");
         tx.send(crate::input::thread::InputMessage::Event(Event::Key(
-            crossterm::event::KeyEvent::new(KeyCode::Char('a'), crossterm::event::KeyModifiers::NONE),
+            crossterm::event::KeyEvent::new(
+                KeyCode::Char('a'),
+                crossterm::event::KeyModifiers::NONE,
+            ),
         )))
         .expect("send a");
 

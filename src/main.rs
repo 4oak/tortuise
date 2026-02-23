@@ -135,6 +135,10 @@ fn main() -> AppResult<()> {
         backend,
         #[cfg(feature = "metal")]
         metal_backend,
+        #[cfg(feature = "metal")]
+        last_gpu_error: None,
+        #[cfg(feature = "metal")]
+        gpu_fallback_active: false,
     };
     sync_orbit_from_camera(&mut app_state);
 

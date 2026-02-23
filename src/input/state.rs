@@ -43,11 +43,7 @@ mod tests {
 
     fn make_state() -> AppState {
         AppState {
-            camera: Camera::new(
-                Vec3::new(0.0, 0.0, 5.0),
-                -std::f32::consts::FRAC_PI_2,
-                0.0,
-            ),
+            camera: Camera::new(Vec3::new(0.0, 0.0, 5.0), -std::f32::consts::FRAC_PI_2, 0.0),
             splats: Vec::new(),
             projected_splats: Vec::new(),
             render_state: RenderState {
@@ -73,6 +69,10 @@ mod tests {
             backend: Backend::Cpu,
             #[cfg(feature = "metal")]
             metal_backend: None,
+            #[cfg(feature = "metal")]
+            last_gpu_error: None,
+            #[cfg(feature = "metal")]
+            gpu_fallback_active: false,
         }
     }
 

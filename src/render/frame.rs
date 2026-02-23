@@ -220,30 +220,36 @@ pub fn render_frame(
 /// Run the full GPU tile-based pipeline and write results into RenderState.
 /// Returns `true` if the GPU path was used, `false` if it was unavailable.
 #[cfg(feature = "metal")]
-fn gpu_render_to_framebuffer(
-    app_state: &mut AppState,
-    width: usize,
-    height: usize,
-) -> bool {
-    let metal_backend = match app_state.metal_backend {
-        Some(ref mut mb) => mb,
+fn gpu_render_to_framebuffer(app_state: &mut AppState, width: usize, height: usize) -> bool {
+    let is_ready = match app_state.metal_backend.as_ref() {
+        Some(mb) => mb.is_ready(),
         None => return false,
     };
-
-    if !metal_backend.is_ready() {
+    if !is_ready {
         return false;
     }
 
-    if let Err(_e) = metal_backend.render(
-        &app_state.camera,
-        width,
-        height,
-        app_state.splats.len(),
-    ) {
-        // Silently fall back to CPU -- eprintln! would corrupt the TUI display.
+    let render_result: Result<(), crate::render::metal::MetalRenderError> =
+        match app_state.metal_backend.as_mut() {
+            Some(mb) => mb.render(&app_state.camera, width, height, app_state.splats.len()),
+            None => return false,
+        };
+
+    if let Err(err) = render_result {
+        record_gpu_error(app_state, &err);
+        if err.should_disable_gpu() {
+            app_state.backend = Backend::Cpu;
+            app_state.metal_backend = None;
+            app_state.gpu_fallback_active = true;
+            eprintln!("Metal disabled for remainder of session: {err}");
+        }
         return false;
     }
-    let packed = metal_backend.framebuffer_slice();
+
+    let packed = match app_state.metal_backend.as_ref() {
+        Some(mb) => mb.framebuffer_slice(),
+        None => return false,
+    };
 
     // Unpack RGBA u32 into RenderState framebuffer ([u8; 3]) and alpha_buffer.
     let rs = &mut app_state.render_state;
@@ -265,6 +271,11 @@ fn gpu_render_to_framebuffer(
     // but report total splat count for the HUD.
     app_state.visible_splat_count = app_state.splats.len();
     true
+}
+
+#[cfg(feature = "metal")]
+fn record_gpu_error(app_state: &mut AppState, err: &dyn std::error::Error) {
+    app_state.last_gpu_error = Some(err.to_string());
 }
 
 pub fn run_app_loop(

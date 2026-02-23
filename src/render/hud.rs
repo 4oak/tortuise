@@ -37,8 +37,18 @@ pub fn draw_hud(
     } else {
         "N/A".to_string()
     };
+    #[cfg(feature = "metal")]
+    let gpu_status = if app_state.gpu_fallback_active {
+        app_state
+            .last_gpu_error
+            .as_deref()
+            .unwrap_or("GPU disabled")
+            .to_string()
+    } else {
+        "OK".to_string()
+    };
     let hud = format!(
-        "FPS:{:>5.1}  Splats:{}/{}  Pos:({:>6.2},{:>6.2},{:>6.2})  Speed:{:.2}  Orbit:{}  Mode:{}  Backend:{}  SS:{}  Cores:{}",
+        "FPS:{:>5.1}  Splats:{}/{}  Pos:({:>6.2},{:>6.2},{:>6.2})  Speed:{:.2}  Orbit:{}  Mode:{}  Backend:{}  SS:{}  Cores:{}{}",
         app_state.fps,
         app_state.visible_splat_count,
         app_state.splats.len(),
@@ -51,6 +61,16 @@ pub fn draw_hud(
         app_state.backend.name(),
         ss_text,
         rayon::current_num_threads(),
+        {
+            #[cfg(feature = "metal")]
+            {
+                format!("  GPU:{gpu_status}")
+            }
+            #[cfg(not(feature = "metal"))]
+            {
+                String::new()
+            }
+        }
     );
     let hud_text = truncate_to_width(&hud, width);
 

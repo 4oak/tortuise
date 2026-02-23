@@ -98,4 +98,8 @@ pub struct AppState {
     pub backend: Backend,
     #[cfg(feature = "metal")]
     pub metal_backend: Option<crate::render::metal::MetalBackend>,
+    #[cfg(feature = "metal")]
+    pub last_gpu_error: Option<String>,
+    #[cfg(feature = "metal")]
+    pub gpu_fallback_active: bool,
 }

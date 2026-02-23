@@ -7,7 +7,7 @@ use std::io::{self, Write};
 
 #[cfg(feature = "metal")]
 use super::Backend;
-use super::{AppState, HALF_BLOCK};
+use super::{AppState, HalfblockCell, HALF_BLOCK};
 
 #[cfg(feature = "metal")]
 fn rgb_from_packed_pixel(pixel: u32) -> [u8; 3] {
@@ -25,9 +25,11 @@ fn build_halfblock_cells_rgb(
     term_cols: usize,
     term_rows: usize,
     ss: usize,
-) -> Vec<([u8; 3], [u8; 3])> {
+    out: &mut Vec<HalfblockCell>,
+) {
     if ss == 1 {
-        let mut out = vec![([0u8; 3], [0u8; 3]); term_cols * term_rows];
+        out.clear();
+        out.resize(term_cols * term_rows, ([0u8; 3], [0u8; 3]));
         for term_row in 0..term_rows {
             let top_y = term_row * 2;
             let bot_y = top_y + 1;
@@ -41,11 +43,10 @@ fn build_halfblock_cells_rgb(
                 out[term_row * term_cols + x] = (top, bot);
             }
         }
-        out
     } else {
-        super::modes::halfblock::downsample_to_terminal(
-            fb, ss_width, ss_height, term_cols, term_rows, ss,
-        )
+        super::modes::halfblock::downsample_to_terminal_into(
+            fb, ss_width, ss_height, term_cols, term_rows, ss, out,
+        );
     }
 }
 
@@ -57,9 +58,11 @@ fn build_halfblock_cells_packed(
     term_cols: usize,
     term_rows: usize,
     ss: usize,
-) -> Vec<([u8; 3], [u8; 3])> {
+    out: &mut Vec<HalfblockCell>,
+) {
     if ss == 1 {
-        let mut out = vec![([0u8; 3], [0u8; 3]); term_cols * term_rows];
+        out.clear();
+        out.resize(term_cols * term_rows, ([0u8; 3], [0u8; 3]));
         for term_row in 0..term_rows {
             let top_y = term_row * 2;
             let bot_y = top_y + 1;
@@ -83,11 +86,10 @@ fn build_halfblock_cells_packed(
                 out[term_row * term_cols + x] = (top, bot);
             }
         }
-        out
     } else {
-        super::modes::halfblock::downsample_packed_to_terminal(
-            packed_fb, ss_width, ss_height, term_cols, term_rows, ss,
-        )
+        super::modes::halfblock::downsample_packed_to_terminal_into(
+            packed_fb, ss_width, ss_height, term_cols, term_rows, ss, out,
+        );
     }
 }
 
@@ -130,13 +132,21 @@ pub fn render_halfblock_frame(
     }
 
     #[cfg(feature = "metal")]
-    let cells = if gpu_rendered {
+    if gpu_rendered {
         let packed = app_state
             .metal_backend
             .as_ref()
             .map(|mb| mb.framebuffer_slice())
             .unwrap_or(&[]);
-        build_halfblock_cells_packed(packed, ss_width, ss_height, term_cols, term_rows, ss)
+        build_halfblock_cells_packed(
+            packed,
+            ss_width,
+            ss_height,
+            term_cols,
+            term_rows,
+            ss,
+            &mut app_state.halfblock_cells,
+        );
     } else {
         build_halfblock_cells_rgb(
             &app_state.render_state.framebuffer,
@@ -145,21 +155,25 @@ pub fn render_halfblock_frame(
             term_cols,
             term_rows,
             ss,
-        )
-    };
+            &mut app_state.halfblock_cells,
+        );
+    }
 
     #[cfg(not(feature = "metal"))]
-    let cells = build_halfblock_cells_rgb(
+    build_halfblock_cells_rgb(
         &app_state.render_state.framebuffer,
         ss_width,
         ss_height,
         term_cols,
         term_rows,
         ss,
+        &mut app_state.halfblock_cells,
     );
 
+    let cells = &app_state.halfblock_cells;
     let mut last_bg: Option<(u8, u8, u8)> = None;
     let mut last_fg: Option<(u8, u8, u8)> = None;
+    let mut row_buf = String::with_capacity(term_cols * 8 + 32);
 
     for term_row in 0..term_rows {
         if super::modes::is_hud_overlay_row(app_state.show_hud, term_row, term_rows) {
@@ -168,7 +182,7 @@ pub fn render_halfblock_frame(
             continue;
         }
 
-        let mut row_buf = String::with_capacity(term_cols * 8 + 32);
+        row_buf.clear();
         write_ansi_command(&mut row_buf, cursor::MoveTo(0, term_row as u16))?;
 
         for x in 0..term_cols {

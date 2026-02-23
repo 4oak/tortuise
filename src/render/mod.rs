@@ -13,6 +13,7 @@ use crate::camera::Camera;
 use crate::splat::{ProjectedSplat, Splat};
 
 pub type AppResult<T> = Result<T, Box<dyn std::error::Error>>;
+pub type HalfblockCell = ([u8; 3], [u8; 3]);
 
 pub const HALF_BLOCK: char = '\u{2584}';
 pub const FRAME_TARGET: std::time::Duration = std::time::Duration::from_millis(8);
@@ -83,6 +84,8 @@ pub struct AppState {
     pub splats: Vec<Splat>,
     pub projected_splats: Vec<ProjectedSplat>,
     pub render_state: RenderState,
+    pub halfblock_cells: Vec<HalfblockCell>,
+    pub hud_string_buf: String,
     pub input_state: crate::input::state::InputState,
     pub show_hud: bool,
     pub auto_orbit: bool,

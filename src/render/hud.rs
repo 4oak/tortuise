@@ -2,23 +2,38 @@ use crossterm::{
     cursor, queue,
     style::{Color, Print, SetBackgroundColor, SetForegroundColor},
 };
+use std::fmt::Write as _;
 use std::io::{self, Write};
 
 use super::{AppState, RenderMode};
 
-pub fn truncate_to_width(text: &str, width: usize) -> String {
+fn truncate_and_pad_in_place(text: &mut String, width: usize) {
     if width == 0 {
-        return String::new();
+        text.clear();
+        return;
     }
-    let mut out = String::new();
-    for c in text.chars().take(width) {
-        out.push(c);
+
+    let mut seen_chars = 0usize;
+    let mut truncate_byte = None;
+    for (idx, _) in text.char_indices() {
+        if seen_chars == width {
+            truncate_byte = Some(idx);
+            break;
+        }
+        seen_chars += 1;
     }
-    out
+
+    if let Some(idx) = truncate_byte {
+        text.truncate(idx);
+    } else {
+        for _ in seen_chars..width {
+            text.push(' ');
+        }
+    }
 }
 
 pub fn draw_hud(
-    app_state: &AppState,
+    app_state: &mut AppState,
     cols: u16,
     rows: u16,
     ss: usize,
@@ -27,26 +42,11 @@ pub fn draw_hud(
     let width = cols as usize;
     let term_cols = cols as usize;
     let term_rows = rows as usize;
-    let ss_text = if app_state.render_mode == RenderMode::Halfblock {
-        format!(
-            "{}x [{}x{}]",
-            app_state.supersample_factor,
-            term_cols * ss,
-            term_rows * 2 * ss
-        )
-    } else {
-        "N/A".to_string()
-    };
-    #[cfg(feature = "metal")]
-    let gpu_status = if let Some(err) = app_state.last_gpu_error.as_deref() {
-        format!("ERR:{err}")
-    } else if app_state.gpu_fallback_active {
-        "DISABLED".to_string()
-    } else {
-        "OK".to_string()
-    };
-    let hud = format!(
-        "FPS:{:>5.1}  Splats:{}/{}  Pos:({:>6.2},{:>6.2},{:>6.2})  Speed:{:.2}  Orbit:{}  Mode:{}  Backend:{}  SS:{}  Cores:{}{}",
+    let hud = &mut app_state.hud_string_buf;
+    hud.clear();
+    write!(
+        hud,
+        "FPS:{:>5.1}  Splats:{}/{}  Pos:({:>6.2},{:>6.2},{:>6.2})  Speed:{:.2}  Orbit:{}  Mode:{}  Backend:{}  SS:",
         app_state.fps,
         app_state.visible_splat_count,
         app_state.splats.len(),
@@ -56,21 +56,37 @@ pub fn draw_hud(
         app_state.move_speed,
         if app_state.auto_orbit { "ON" } else { "OFF" },
         app_state.render_mode.name(),
-        app_state.backend.name(),
-        ss_text,
-        rayon::current_num_threads(),
-        {
-            #[cfg(feature = "metal")]
-            {
-                format!("  GPU:{gpu_status}")
-            }
-            #[cfg(not(feature = "metal"))]
-            {
-                String::new()
-            }
+        app_state.backend.name()
+    )
+    .map_err(|_| io::Error::other("failed to format HUD"))?;
+
+    if app_state.render_mode == RenderMode::Halfblock {
+        write!(
+            hud,
+            "{}x [{}x{}]",
+            app_state.supersample_factor,
+            term_cols * ss,
+            term_rows * 2 * ss
+        )
+        .map_err(|_| io::Error::other("failed to format HUD"))?;
+    } else {
+        hud.push_str("N/A");
+    }
+
+    write!(hud, "  Cores:{}", rayon::current_num_threads())
+        .map_err(|_| io::Error::other("failed to format HUD"))?;
+    #[cfg(feature = "metal")]
+    {
+        hud.push_str("  GPU:");
+        if let Some(err) = app_state.last_gpu_error.as_deref() {
+            write!(hud, "ERR:{err}").map_err(|_| io::Error::other("failed to format HUD"))?;
+        } else if app_state.gpu_fallback_active {
+            hud.push_str("DISABLED");
+        } else {
+            hud.push_str("OK");
         }
-    );
-    let hud_text = truncate_to_width(&hud, width);
+    }
+    truncate_and_pad_in_place(hud, width);
 
     queue!(
         stdout,
@@ -81,11 +97,13 @@ pub fn draw_hud(
             g: 245,
             b: 245
         }),
-        Print(format!("{:<w$}", hud_text, w = width))
+        Print(hud.as_str())
     )?;
 
     let controls = "WASD:Move  Arrows:Look  +/-:Speed  Space:Orbit  M:Mode  Tab:HUD  R:Reset  1/2/3:SS  Q/Esc:Quit";
-    let controls_text = truncate_to_width(controls, width);
+    hud.clear();
+    hud.push_str(controls);
+    truncate_and_pad_in_place(hud, width);
 
     queue!(
         stdout,
@@ -96,7 +114,7 @@ pub fn draw_hud(
             g: 220,
             b: 220
         }),
-        Print(format!("{:<w$}", controls_text, w = width))
+        Print(hud.as_str())
     )?;
 
     Ok(())

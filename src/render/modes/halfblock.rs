@@ -1,14 +1,18 @@
+use crate::render::HalfblockCell;
+
 // --- Downsample ---
 
-pub fn downsample_to_terminal(
+pub fn downsample_to_terminal_into(
     fb: &[[u8; 3]],
     ss_width: usize,
     ss_height: usize,
     term_cols: usize,
     term_rows: usize,
     ss: usize,
-) -> Vec<([u8; 3], [u8; 3])> {
-    let mut out = vec![([0u8; 3], [0u8; 3]); term_cols * term_rows];
+    out: &mut Vec<HalfblockCell>,
+) {
+    out.clear();
+    out.resize(term_cols * term_rows, ([0u8; 3], [0u8; 3]));
 
     for term_row in 0..term_rows {
         for term_col in 0..term_cols {
@@ -73,20 +77,20 @@ pub fn downsample_to_terminal(
             out[term_row * term_cols + term_col] = (bg_color, fg_color);
         }
     }
-
-    out
 }
 
 #[cfg(feature = "metal")]
-pub fn downsample_packed_to_terminal(
+pub fn downsample_packed_to_terminal_into(
     fb: &[u32],
     ss_width: usize,
     ss_height: usize,
     term_cols: usize,
     term_rows: usize,
     ss: usize,
-) -> Vec<([u8; 3], [u8; 3])> {
-    let mut out = vec![([0u8; 3], [0u8; 3]); term_cols * term_rows];
+    out: &mut Vec<HalfblockCell>,
+) {
+    out.clear();
+    out.resize(term_cols * term_rows, ([0u8; 3], [0u8; 3]));
 
     for term_row in 0..term_rows {
         for term_col in 0..term_cols {
@@ -150,6 +154,4 @@ pub fn downsample_packed_to_terminal(
             out[term_row * term_cols + term_col] = (bg_color, fg_color);
         }
     }
-
-    out
 }

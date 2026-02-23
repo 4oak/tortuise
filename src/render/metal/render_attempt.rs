@@ -8,7 +8,9 @@ use super::error::MetalRenderError;
 use super::pipeline::{read_shared_u32, set_bytes_u32, write_shared_struct};
 use super::sort::{dispatch_1d, div_ceil_u32};
 use super::sync::commit_and_wait_or_disable_gpu;
-use super::types::{GpuCameraData, TileConfig, RADIX_BUCKETS, THREADS_PER_GROUP_1D, TILE_SIZE};
+use super::types::{
+    GpuCameraData, TileConfig, RADIX_BUCKETS, SHADER_TILE_SIZE, THREADS_PER_GROUP_1D, TILE_SIZE,
+};
 use super::MetalBackend;
 
 const GPU_WAIT_TIMEOUT: Duration = Duration::from_millis(500);
@@ -209,9 +211,10 @@ pub(super) fn run_single_render_attempt(
         encoder.set_buffer(4, Some(&backend.framebuffer), 0);
         encoder.set_buffer(5, Some(&backend.tile_config_buffer), 0);
         set_bytes_u32(encoder, 6, dispatch_overlaps);
+        debug_assert_eq!(TILE_SIZE, SHADER_TILE_SIZE);
         encoder.dispatch_thread_groups(
             MTLSize::new(u64::from(tile_count_x), u64::from(tile_count_y), 1),
-            MTLSize::new(16, 16, 1),
+            MTLSize::new(u64::from(TILE_SIZE), u64::from(TILE_SIZE), 1),
         );
         encoder.end_encoding();
     }

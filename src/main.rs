@@ -91,7 +91,6 @@ fn main() -> AppResult<()> {
     let mut backend = if cli.cpu {
         Backend::Cpu
     } else {
-        let _force_metal = cli.metal;
         Backend::Metal
     };
     #[cfg(not(feature = "metal"))]
@@ -147,6 +146,8 @@ fn main() -> AppResult<()> {
             width,
             height,
         },
+        halfblock_cells: Vec::with_capacity(width * rows.max(1) as usize),
+        hud_string_buf: String::with_capacity(512),
         input_state: input::state::InputState::default(),
         show_hud: true,
         auto_orbit: false,

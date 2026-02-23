@@ -83,12 +83,10 @@ pub fn load_ply_file(path: &str) -> AppResult<Vec<Splat>> {
         .map_err(|e| format!("failed to read '{}': {}", Path::new(path).display(), e))?;
     let header_end = find_ply_header_end(&data).ok_or("PLY parse error: missing end_header")?;
     let header_text = std::str::from_utf8(&data[..header_end])?;
-
     let mut is_binary_le = false;
     let mut vertex_count: usize = 0;
     let mut in_vertex_element = false;
     let mut vertex_props: Vec<PlyProperty> = Vec::new();
-
     for line in header_text.lines() {
         let line = line.trim();
         if line.is_empty() || line.starts_with("comment") {
@@ -98,7 +96,6 @@ pub fn load_ply_file(path: &str) -> AppResult<Vec<Splat>> {
         if parts.is_empty() {
             continue;
         }
-
         match parts[0] {
             "ply" => {}
             "format" => {
@@ -133,7 +130,6 @@ pub fn load_ply_file(path: &str) -> AppResult<Vec<Splat>> {
             _ => {}
         }
     }
-
     if !is_binary_le {
         return Err("PLY parse error: only binary_little_endian format is supported".into());
     }
@@ -148,7 +144,6 @@ pub fn load_ply_file(path: &str) -> AppResult<Vec<Splat>> {
     if stride == 0 {
         return Err("PLY parse error: invalid vertex stride".into());
     }
-
     let vertex_bytes = vertex_count
         .checked_mul(stride)
         .ok_or("PLY parse error: size overflow computing buffer size")?;
@@ -162,7 +157,6 @@ pub fn load_ply_file(path: &str) -> AppResult<Vec<Splat>> {
         )
         .into());
     }
-
     let mut splats = Vec::with_capacity(vertex_count);
     for i in 0..vertex_count {
         let vertex_offset = i
@@ -177,7 +171,6 @@ pub fn load_ply_file(path: &str) -> AppResult<Vec<Splat>> {
         let chunk = data
             .get(base..end)
             .ok_or("PLY parse error: vertex data out of bounds")?;
-
         let mut p = Vec3::ZERO;
         let mut dc = [0.0_f32; 3];
         let mut rgb = [0.0_f32; 3];
@@ -199,7 +192,6 @@ pub fn load_ply_file(path: &str) -> AppResult<Vec<Splat>> {
                 .ok_or("PLY parse error: property data out of bounds")?;
             let value = prop.ty.read_as_f32(field);
             cursor = field_end;
-
             match prop.name.as_str() {
                 "x" => p.x = value,
                 "y" => p.y = value,
@@ -260,7 +252,6 @@ pub fn load_ply_file(path: &str) -> AppResult<Vec<Splat>> {
                 _ => {}
             }
         }
-
         let color = if have_dc {
             [
                 clamp_u8(sigmoid(dc[0]) * 255.0),
@@ -272,7 +263,6 @@ pub fn load_ply_file(path: &str) -> AppResult<Vec<Splat>> {
         } else {
             [220, 220, 220]
         };
-
         let opacity = sigmoid(opacity_raw).clamp(0.0, 1.0);
         let scale = if have_scale {
             Vec3::new(
@@ -283,7 +273,6 @@ pub fn load_ply_file(path: &str) -> AppResult<Vec<Splat>> {
         } else {
             Vec3::new(0.05, 0.05, 0.05)
         };
-
         let rotation = if have_rotation {
             quat_normalize(rotation)
         } else {
@@ -297,6 +286,5 @@ pub fn load_ply_file(path: &str) -> AppResult<Vec<Splat>> {
             rotation,
         });
     }
-
     Ok(splats)
 }

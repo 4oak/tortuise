@@ -1,4 +1,5 @@
 pub(super) const TILE_SIZE: u32 = 16;
+pub(super) const SHADER_TILE_SIZE: u32 = 16;
 pub(super) const THREADS_PER_GROUP_1D: u32 = 256;
 pub(super) const RADIX_BUCKETS: u32 = 256;
 

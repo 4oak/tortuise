@@ -5,11 +5,20 @@ use metal::{Buffer, CompileOptions, ComputePipelineState, Device, Library, MTLRe
 use crate::splat::Splat;
 
 use super::error::MetalRenderError;
-use super::types::{GpuCameraData, GpuProjectedSplat, GpuSplatData, TileConfig};
+use super::types::{
+    GpuCameraData, GpuProjectedSplat, GpuSplatData, TileConfig, SHADER_TILE_SIZE, TILE_SIZE,
+};
 use super::MetalBackend;
 
 impl MetalBackend {
     pub fn new(max_splats: usize) -> Result<Self, MetalRenderError> {
+        // Keep Rust and shader tile constants in lockstep: the tile overlap logic
+        // and rasterization threadgroup dimensions must both use the same TILE_SIZE.
+        assert_eq!(
+            TILE_SIZE, SHADER_TILE_SIZE,
+            "TILE_SIZE mismatch: update Rust constants and shaders/tile_ops.metal + shaders/tile_rasterize.metal together"
+        );
+
         let device = Device::system_default()
             .ok_or_else(|| MetalRenderError::Other("No Metal device found".to_string()))?;
         let command_queue = device.new_command_queue();

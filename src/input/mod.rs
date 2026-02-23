@@ -139,6 +139,8 @@ mod tests {
                 width: 2,
                 height: 2,
             },
+            halfblock_cells: Vec::new(),
+            hud_string_buf: String::new(),
             input_state: crate::input::state::InputState::default(),
             show_hud: true,
             auto_orbit: false,

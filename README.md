@@ -4,6 +4,7 @@ Gaussian splats viewer that works in your terminal. Yes, it's made of symbols!
 
 ![tortuise demo](https://raw.githubusercontent.com/buildoak/tortuise/main/assets/demo.webp)
 
+[![crates.io](https://img.shields.io/crates/v/tortuise.svg)](https://crates.io/crates/tortuise)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Linux-lightgrey)
 
@@ -35,7 +36,10 @@ Inspiration by [ratatui](https://github.com/ratatui/ratatui) merged with binge w
 **Requires Rust 1.80+** (`rustup update` to upgrade)
 
 ```bash
-# From source (recommended for now)
+# Install from crates.io (recommended)
+cargo install tortuise
+
+# Or build from source
 git clone https://github.com/buildoak/tortuise.git
 cd tortuise
 cargo install --path .

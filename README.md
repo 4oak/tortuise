@@ -7,7 +7,9 @@ Gaussian splats viewer that works in your terminal. Yes, it's made of symbols!
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Linux-lightgrey)
 
-A CPU-first 3D Gaussian Splatting viewer built on [ratatui](https://github.com/ratatui/ratatui). Fully parallelized rendering pipeline via [rayon](https://github.com/rayon-rs/rayon), perceptual color mapping, six render modes — all running on pure CPU. Real scenes with 1.1M splats hold 10–25 FPS. No GPU required.
+A CPU-first 3D Gaussian Splatting viewer inspired by [ratatui](https://github.com/ratatui/ratatui), built on [crossterm](https://github.com/crossterm-rs/crossterm). Fully parallelized rendering pipeline via [rayon](https://github.com/rayon-rs/rayon), perceptual color mapping, six render modes — all running on pure CPU. Real scenes with 1.1M splats hold 10–25 FPS. No GPU required.
+
+<!-- Demo recorded in Ghostty, halfblock mode, no Kitty graphics protocol — pure Unicode characters -->
 
 ## Why this exists
 
@@ -17,14 +19,16 @@ Inspiration by [ratatui](https://github.com/ratatui/ratatui) merged with binge w
 
 ## Features
 
-- **6 render modes** -- halfblock (default), point cloud, matrix, block density, braille, ASCII. Cycle with `M`.
-- **Full 3D navigation** -- WASD movement, R/F for vertical, arrow keys for yaw and pitch. Smooth held-key input.
-- **Two camera modes** -- Free (fly anywhere) and Orbit (auto-rotate around the origin). Switch with Space.
-- **Loads .ply and .splat files** -- the standard 3DGS formats. Binary little-endian PLY with SH coefficients, 32-byte .splat records.
-- **Built-in demo scene** -- loads `scenes/luigi.ply` when available; falls back to a procedural torus knot if not found. No files needed.
-- **Intelligent terminal detection** -- truecolor for modern terminals, perceptual 256-color fallback for Terminal.app. Color mapping uses human-vision-weighted distance so the fallback looks as good as 256 colors can. Auto-detected, zero config.
-- **Supersampling** -- 1x/2x/3x factor for higher fidelity at the cost of compute.
-- **Cross-platform** -- macOS and Linux.
+| Feature | Details |
+|---------|---------|
+| **6 render modes** | Halfblock (default), point cloud, matrix, block density, braille, ASCII. Cycle with `M` |
+| **Full 3D navigation** | WASD movement, R/F vertical, arrow keys for yaw/pitch. Smooth held-key input |
+| **Two camera modes** | Free (fly anywhere) and Orbit (auto-rotate around origin). Switch with `Space` |
+| **.ply and .splat files** | Standard 3DGS formats. Binary little-endian PLY with SH coefficients, 32-byte .splat records |
+| **Built-in demo scene** | Loads `scenes/luigi.ply` when available; falls back to a procedural torus knot. No files needed |
+| **Terminal detection** | Truecolor for modern terminals, perceptual 256-color fallback for Terminal.app. Zero config |
+| **Supersampling** | 1x/2x/3x factor for higher fidelity at the cost of compute |
+| **Cross-platform** | macOS and Linux |
 
 ## Quick start
 
@@ -104,11 +108,16 @@ Auto-detected via `COLORTERM`, `TERM_PROGRAM`, and `TERM` environment variables.
 
 ## Tested hardware
 
-| Device | CPU | Scene | FPS |
-|--------|-----|-------|-----|
+| Device | CPU | Scene | Reference FPS |
+|--------|-----|-------|---------------|
 | Mac Mini M4 | Apple M4 | luigi.ply (965K) | 120+ |
+| Mac Mini M4 | Apple M4 | bonsai.splat (1.1M) | 80+ |
 | MacBook Air M2 | Apple M2 | luigi.ply (965K) | ✓ |
-| Jetson Orin Nano | ARM Cortex-A78AE | luigi.ply (965K) | ~30 |
+| MacBook Air M2 | Apple M2 | bonsai.splat (1.1M) | 20–30 |
+| Jetson Orin Nano* | ARM Cortex-A78AE | luigi.ply (965K) | ~30 |
+| Jetson Orin Nano* | ARM Cortex-A78AE | bonsai.splat (1.1M) | 10–15 |
+
+FPS is approximate and depends heavily on terminal window size — a smaller window (⌘-) renders fewer cells and runs faster. *Jetson tested over SSH, which may be a bottleneck.
 
 ## Where to get scenes
 
@@ -133,7 +142,7 @@ The frame target is 8ms (~120fps). On truecolor terminals, colors are passed as 
 
 ## Roadmap
 
-Things I want to build next -- and contribution opportunities if any of these scratch your itch too:
+Things I want to improve next -- and contribution opportunities:
 
 - **Kitty graphics protocol** -- pixel-perfect rendering via the terminal image protocol. Roughly 18x the resolution of half-block characters. This is the big one.
 - **SHARP integration** -- image-to-splat-to-view pipeline. Single photo to 3D in your terminal.
@@ -148,7 +157,7 @@ Things I want to build next -- and contribution opportunities if any of these sc
 - [rayon](https://github.com/rayon-rs/rayon) -- data parallelism for projection and rasterization
 - [clap](https://github.com/clap-rs/clap) -- CLI argument parsing
 
-The name lineage: ratatouille -> [ratatui](https://github.com/ratatui/ratatui) -> tortuise.
+[ratatui](https://github.com/ratatui/ratatui) + tortoise = tortuise.
 
 ## License
 

@@ -2,9 +2,7 @@
 
 Gaussian splats in your terminal.
 
-![tortuise demo](assets/demo-still.png)
-
-<video src="https://github.com/buildoak/tortuise/raw/main/assets/demo.mp4" autoplay loop muted playsinline width="800"></video>
+https://github.com/user-attachments/assets/05405ade-8a26-4bf0-97da-23c31c3fb261
 
 [![Crates.io](https://img.shields.io/crates/v/tortuise)](https://crates.io/crates/tortuise)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)

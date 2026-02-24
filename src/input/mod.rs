@@ -2,7 +2,6 @@ pub mod state;
 pub mod thread;
 
 use crate::camera;
-use crate::math::Vec3;
 use crate::render::{AppState, CameraMode};
 use crossterm::event::{Event, KeyCode, KeyEventKind};
 use std::sync::mpsc::{Receiver, TryRecvError};

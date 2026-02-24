@@ -86,6 +86,11 @@ pub fn move_right(camera: &mut Camera, distance: f32) {
     camera.position += camera.right * distance;
 }
 
+pub fn move_up(camera: &mut Camera, distance: f32) {
+    let world_up = crate::math::Vec3::new(0.0, 1.0, 0.0);
+    camera.position += world_up * distance;
+}
+
 pub fn adjust_pitch(camera: &mut Camera, delta: f32) {
     camera.pitch = (camera.pitch + delta).clamp(-1.5, 1.5);
     camera.update_vectors();

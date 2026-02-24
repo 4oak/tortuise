@@ -7,6 +7,8 @@ pub struct HeldMovementKeys {
     pub back: bool,
     pub left: bool,
     pub right: bool,
+    pub up: bool,
+    pub down: bool,
 }
 
 #[derive(Debug, Default)]
@@ -24,12 +26,16 @@ pub fn apply_movement_from_held_keys(app_state: &mut AppState, delta_time: f32) 
     let held = app_state.input_state.held;
     let forward = (held.forward as i8 - held.back as i8) as f32;
     let right = (held.right as i8 - held.left as i8) as f32;
+    let up = (held.up as i8 - held.down as i8) as f32;
 
     if forward != 0.0 {
         camera::move_forward(&mut app_state.camera, forward * step);
     }
     if right != 0.0 {
         camera::move_right(&mut app_state.camera, right * step);
+    }
+    if up != 0.0 && matches!(app_state.camera_mode, crate::render::CameraMode::Free) {
+        camera::move_up(&mut app_state.camera, up * step);
     }
 }
 

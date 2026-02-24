@@ -99,10 +99,10 @@ pub fn draw_hud(
 
     let controls = match app_state.camera_mode {
         super::CameraMode::Free => {
-            "WASD:Move  Arrows:Look  +/-:Speed  Space:Orbit  M:Mode  Tab:HUD  R:Reset  Q/Esc:Quit"
+            "WASD:Move  R/F:Up/Down  Arrows:Look  +/-:Speed  Space:Orbit  M:Mode  Tab:HUD  Z:Reset  Q/Esc:Quit"
         }
         super::CameraMode::Orbit => {
-            "Arrows:Elevation/Nudge  +/-:Speed  Space:Free cam  M:Mode  Tab:HUD  R:Reset  Q/Esc:Quit"
+            "Arrows:Elevation/Nudge  +/-:Speed  Space:Free cam  M:Mode  Tab:HUD  Z:Reset  Q/Esc:Quit"
         }
     };
     hud.clear();

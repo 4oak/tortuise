@@ -81,6 +81,8 @@ pub fn handle_input_event(app_state: &mut AppState, event: Event) -> AppResult<(
                         's' => app_state.input_state.held.back = pressed,
                         'a' => app_state.input_state.held.left = pressed,
                         'd' => app_state.input_state.held.right = pressed,
+                        'r' => app_state.input_state.held.up = pressed,
+                        'f' => app_state.input_state.held.down = pressed,
                         _ => {}
                     }
                 }
@@ -157,7 +159,7 @@ pub fn handle_input_event(app_state: &mut AppState, event: Event) -> AppResult<(
                     'm' => {
                         app_state.render_mode = app_state.render_mode.next();
                     }
-                    'r' => {
+                    'z' => {
                         camera::reset(&mut app_state.camera);
                         app_state.camera_mode = CameraMode::Free;
                         app_state.orbit_target = Vec3::ZERO;

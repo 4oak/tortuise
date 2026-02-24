@@ -2,7 +2,7 @@
 
 Gaussian splats in your terminal.
 
-https://github.com/user-attachments/assets/05405ade-8a26-4bf0-97da-23c31c3fb261
+![tortuise demo](assets/demo.gif)
 
 [![Crates.io](https://img.shields.io/crates/v/tortuise)](https://crates.io/crates/tortuise)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -41,7 +41,7 @@ cargo install --path .
 tortuise --demo
 
 # Load a bundled scene
-tortuise scenes/bonsai.splat
+tortuise --flip-y scenes/bonsai.splat
 
 # Load any .ply or .splat file
 tortuise your-scene.splat

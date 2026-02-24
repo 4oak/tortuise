@@ -31,12 +31,18 @@ Turns out 45K splats render just fine in Unicode half-block characters. Real sce
 ## Quick start
 
 ```bash
-cargo install tortuise
+# From source (recommended for now)
+git clone https://github.com/buildoak/tortuise.git
+cd tortuise
+cargo install --path .
 
 # Built-in demo (no scene file needed)
 tortuise --demo
 
-# Load a scene
+# Load a bundled scene
+tortuise scenes/bonsai.splat
+
+# Load any .ply or .splat file
 tortuise your-scene.splat
 tortuise your-scene.ply
 

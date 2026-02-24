@@ -4,7 +4,6 @@ Gaussian splats in your terminal.
 
 ![tortuise demo](assets/demo.webp)
 
-[![Crates.io](https://img.shields.io/crates/v/tortuise)](https://crates.io/crates/tortuise)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Linux-lightgrey)
 
@@ -18,9 +17,9 @@ Turns out 45K splats render just fine in Unicode half-block characters. Real sce
 
 ## Features
 
-- **6 render modes** -- halfblock (default), braille, matrix, ASCII, block density, point cloud. Cycle with `M`.
+- **6 render modes** -- halfblock (default), point cloud, matrix, block density, braille, ASCII. Cycle with `M`.
 - **Full 3D navigation** -- WASD movement, R/F for vertical, arrow keys for yaw and pitch. Smooth held-key input.
-- **Two camera modes** -- Free (fly anywhere) and Orbit (auto-rotate around scene center). Switch with Space.
+- **Two camera modes** -- Free (fly anywhere) and Orbit (auto-rotate around the origin). Switch with Space.
 - **Loads .ply and .splat files** -- the standard 3DGS formats. Binary little-endian PLY with SH coefficients, 32-byte .splat records.
 - **Built-in demo scene** -- loads `scenes/luigi.ply` when available; falls back to a procedural torus knot if not found. No files needed.
 - **Intelligent terminal detection** -- truecolor for modern terminals, perceptual 256-color fallback for Terminal.app. Color mapping uses human-vision-weighted distance so the fallback looks as good as 256 colors can. Auto-detected, zero config.

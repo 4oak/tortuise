@@ -21,8 +21,8 @@ pub fn sync_orbit_from_camera(app_state: &mut AppState) {
 }
 
 fn update_auto_orbit(app_state: &mut AppState, delta_time: f32) {
-    const ORBIT_SPEED: f32 = 0.55;
-    app_state.orbit_angle += ORBIT_SPEED * delta_time;
+    let orbit_speed = 0.9 * app_state.move_speed;
+    app_state.orbit_angle += orbit_speed * delta_time;
 
     app_state.camera.position.x = app_state.orbit_radius * app_state.orbit_angle.cos();
     app_state.camera.position.z = app_state.orbit_radius * app_state.orbit_angle.sin();
@@ -65,6 +65,7 @@ pub fn render_frame(
                     proj_h,
                     stdout,
                     app_state.show_hud,
+                    app_state.use_truecolor,
                 )?,
                 RenderMode::Matrix => super::modes::matrix::render_matrix(
                     &app_state.projected_splats,
@@ -73,6 +74,7 @@ pub fn render_frame(
                     proj_h,
                     stdout,
                     app_state.show_hud,
+                    app_state.use_truecolor,
                 )?,
                 RenderMode::BlockDensity => super::modes::block_density::render_block_density(
                     &app_state.projected_splats,
@@ -81,6 +83,7 @@ pub fn render_frame(
                     proj_h,
                     stdout,
                     app_state.show_hud,
+                    app_state.use_truecolor,
                 )?,
                 RenderMode::Braille => super::modes::braille::render_braille(
                     &app_state.projected_splats,
@@ -89,6 +92,7 @@ pub fn render_frame(
                     proj_h,
                     stdout,
                     app_state.show_hud,
+                    app_state.use_truecolor,
                 )?,
                 RenderMode::AsciiClassic => super::modes::ascii::render_ascii_classic(
                     &app_state.projected_splats,
@@ -97,6 +101,7 @@ pub fn render_frame(
                     proj_h,
                     stdout,
                     app_state.show_hud,
+                    app_state.use_truecolor,
                 )?,
                 _ => unreachable!(),
             }

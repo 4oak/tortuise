@@ -11,6 +11,31 @@ use std::time::Instant;
 
 use crate::camera::Camera;
 use crate::splat::{ProjectedSplat, Splat};
+use crossterm::style::Color;
+
+pub fn rgb_to_ansi256(r: u8, g: u8, b: u8) -> u8 {
+    if r == g && g == b {
+        if r < 8 {
+            return 16;
+        }
+        if r > 248 {
+            return 231;
+        }
+        return 232 + ((r as f32 - 8.0) / 247.0 * 24.0) as u8;
+    }
+    let ri = (r as f32 / 255.0 * 5.0 + 0.5) as u8;
+    let gi = (g as f32 / 255.0 * 5.0 + 0.5) as u8;
+    let bi = (b as f32 / 255.0 * 5.0 + 0.5) as u8;
+    16 + 36 * ri + 6 * gi + bi
+}
+
+pub fn make_color(r: u8, g: u8, b: u8, use_truecolor: bool) -> Color {
+    if use_truecolor {
+        Color::Rgb { r, g, b }
+    } else {
+        Color::AnsiValue(rgb_to_ansi256(r, g, b))
+    }
+}
 
 pub type AppResult<T> = Result<T, Box<dyn std::error::Error>>;
 pub type HalfblockCell = ([u8; 3], [u8; 3]);
@@ -100,6 +125,7 @@ pub struct AppState {
     pub supersample_factor: u32,
     pub render_mode: RenderMode,
     pub backend: Backend,
+    pub use_truecolor: bool,
     #[cfg(feature = "metal")]
     pub metal_backend: Option<crate::render::metal::MetalBackend>,
     #[cfg(feature = "metal")]

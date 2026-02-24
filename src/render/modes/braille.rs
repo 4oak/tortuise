@@ -1,9 +1,10 @@
 use super::{depth_attenuation, is_hud_overlay_row};
 use crate::math::clamp_u8;
+use crate::render::make_color;
 use crate::splat::{evaluate_2d_gaussian, ProjectedSplat};
 use crossterm::{
     cursor, queue,
-    style::{Color, Print, SetBackgroundColor, SetForegroundColor},
+    style::{Print, SetBackgroundColor, SetForegroundColor},
 };
 use rayon::prelude::*;
 use std::io::{self, Write};
@@ -35,6 +36,7 @@ pub fn render_braille(
     proj_height: usize,
     stdout: &mut impl Write,
     show_hud: bool,
+    use_truecolor: bool,
 ) -> io::Result<()> {
     let len = term_cols.saturating_mul(term_rows);
     let mut cell_dots = vec![0u8; len];
@@ -181,22 +183,14 @@ pub fn render_braille(
             if last_bg != Some(bg) {
                 queue!(
                     stdout,
-                    SetBackgroundColor(Color::Rgb {
-                        r: bg.0,
-                        g: bg.1,
-                        b: bg.2
-                    })
+                    SetBackgroundColor(make_color(bg.0, bg.1, bg.2, use_truecolor))
                 )?;
                 last_bg = Some(bg);
             }
             if last_fg != Some(fg) {
                 queue!(
                     stdout,
-                    SetForegroundColor(Color::Rgb {
-                        r: fg.0,
-                        g: fg.1,
-                        b: fg.2
-                    })
+                    SetForegroundColor(make_color(fg.0, fg.1, fg.2, use_truecolor))
                 )?;
                 last_fg = Some(fg);
             }

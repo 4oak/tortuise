@@ -1,11 +1,11 @@
 use crossterm::{
     cursor, queue,
-    style::{Color, Print, SetBackgroundColor, SetForegroundColor},
+    style::{Print, SetBackgroundColor, SetForegroundColor},
 };
 use std::fmt::Write as _;
 use std::io::{self, Write};
 
-use super::{AppState, RenderMode};
+use super::{make_color, AppState, RenderMode};
 
 fn truncate_and_pad_in_place(text: &mut String, width: usize) {
     if width == 0 {
@@ -88,19 +88,17 @@ pub fn draw_hud(
     }
     truncate_and_pad_in_place(hud, width);
 
+    let tc = app_state.use_truecolor;
     queue!(
         stdout,
         cursor::MoveTo(0, 0),
-        SetBackgroundColor(Color::Rgb { r: 0, g: 0, b: 0 }),
-        SetForegroundColor(Color::Rgb {
-            r: 245,
-            g: 245,
-            b: 245
-        }),
+        SetBackgroundColor(make_color(0, 0, 0, tc)),
+        SetForegroundColor(make_color(245, 245, 245, tc)),
         Print(hud.as_str())
     )?;
 
-    let controls = "WASD:Move  Arrows:Look  +/-:Speed  Space:Orbit  M:Mode  Tab:HUD  R:Reset  1/2/3:SS  Q/Esc:Quit";
+    let controls =
+        "WASD:Move  Arrows:Look  +/-:Speed  Space:Orbit  M:Mode  Tab:HUD  R:Reset  Q/Esc:Quit";
     hud.clear();
     hud.push_str(controls);
     truncate_and_pad_in_place(hud, width);
@@ -108,12 +106,8 @@ pub fn draw_hud(
     queue!(
         stdout,
         cursor::MoveTo(0, rows - 1),
-        SetBackgroundColor(Color::Rgb { r: 0, g: 0, b: 0 }),
-        SetForegroundColor(Color::Rgb {
-            r: 220,
-            g: 220,
-            b: 220
-        }),
+        SetBackgroundColor(make_color(0, 0, 0, tc)),
+        SetForegroundColor(make_color(220, 220, 220, tc)),
         Print(hud.as_str())
     )?;
 

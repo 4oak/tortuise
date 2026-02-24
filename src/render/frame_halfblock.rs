@@ -1,13 +1,13 @@
 use crossterm::{
     cursor,
-    style::{Color, SetBackgroundColor, SetForegroundColor},
+    style::{SetBackgroundColor, SetForegroundColor},
     Command,
 };
 use std::io::{self, Write};
 
 #[cfg(feature = "metal")]
 use super::Backend;
-use super::{AppState, HalfblockCell, HALF_BLOCK};
+use super::{make_color, AppState, HalfblockCell, HALF_BLOCK};
 
 #[cfg(feature = "metal")]
 fn rgb_from_packed_pixel(pixel: u32) -> [u8; 3] {
@@ -170,13 +170,15 @@ pub fn render_halfblock_frame(
         &mut app_state.halfblock_cells,
     );
 
+    let use_truecolor = app_state.use_truecolor;
+    let show_hud = app_state.show_hud;
     let cells = &app_state.halfblock_cells;
     let mut last_bg: Option<(u8, u8, u8)> = None;
     let mut last_fg: Option<(u8, u8, u8)> = None;
     let mut row_buf = String::with_capacity(term_cols * 8 + 32);
 
     for term_row in 0..term_rows {
-        if super::modes::is_hud_overlay_row(app_state.show_hud, term_row, term_rows) {
+        if super::modes::is_hud_overlay_row(show_hud, term_row, term_rows) {
             last_bg = None;
             last_fg = None;
             continue;
@@ -193,22 +195,14 @@ pub fn render_halfblock_frame(
             if last_bg != Some(bg) {
                 write_ansi_command(
                     &mut row_buf,
-                    SetBackgroundColor(Color::Rgb {
-                        r: bg.0,
-                        g: bg.1,
-                        b: bg.2,
-                    }),
+                    SetBackgroundColor(make_color(bg.0, bg.1, bg.2, use_truecolor)),
                 )?;
                 last_bg = Some(bg);
             }
             if last_fg != Some(fg) {
                 write_ansi_command(
                     &mut row_buf,
-                    SetForegroundColor(Color::Rgb {
-                        r: fg.0,
-                        g: fg.1,
-                        b: fg.2,
-                    }),
+                    SetForegroundColor(make_color(fg.0, fg.1, fg.2, use_truecolor)),
                 )?;
                 last_fg = Some(fg);
             }

@@ -1,6 +1,8 @@
 use clap::Parser;
 use crossterm::{
-    cursor, execute,
+    cursor,
+    event::{KeyboardEnhancementFlags, PushKeyboardEnhancementFlags},
+    execute,
     terminal::{self, ClearType, EnterAlternateScreen},
 };
 use std::io::{self, BufWriter, Write};
@@ -108,6 +110,14 @@ fn main() -> AppResult<()> {
         }
     }
 
+    let use_truecolor = match std::env::var("COLORTERM") {
+        Ok(val) => val == "truecolor" || val == "24bit",
+        Err(_) => match std::env::var("TERM_PROGRAM") {
+            Ok(prog) => prog != "Apple_Terminal",
+            Err(_) => true,
+        },
+    };
+
     let (cols, rows) = terminal::size().unwrap_or((120, 40));
     let width = cols.max(1) as usize;
     let height = rows.max(1) as usize * 2;
@@ -151,7 +161,7 @@ fn main() -> AppResult<()> {
         input_state: input::state::InputState::default(),
         show_hud: true,
         auto_orbit: false,
-        move_speed: 0.30,
+        move_speed: 0.15,
         frame_count: 0,
         last_frame_time: Instant::now(),
         fps: 0.0,
@@ -162,6 +172,7 @@ fn main() -> AppResult<()> {
         supersample_factor: cli.supersample.max(1),
         render_mode: RenderMode::Halfblock,
         backend,
+        use_truecolor,
         #[cfg(feature = "metal")]
         metal_backend: metal_backend.take(),
         #[cfg(feature = "metal")]
@@ -181,6 +192,14 @@ fn main() -> AppResult<()> {
         cursor::Hide,
         terminal::Clear(ClearType::All)
     )?;
+    // Request key event kinds so key releases are observable for held-key movement.
+    let _ = execute!(
+        stdout,
+        PushKeyboardEnhancementFlags(
+            KeyboardEnhancementFlags::DISAMBIGUATE_ESCAPE_CODES
+                | KeyboardEnhancementFlags::REPORT_EVENT_TYPES
+        )
+    );
     stdout.flush()?;
 
     let run_result = run_app_loop(&mut app_state, &input_rx, &mut stdout);

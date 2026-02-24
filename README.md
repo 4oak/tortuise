@@ -25,7 +25,7 @@ Inspiration by [ratatui](https://github.com/ratatui/ratatui) merged with binge w
 | **Full 3D navigation** | WASD movement, R/F vertical, arrow keys for yaw/pitch. Smooth held-key input |
 | **Two camera modes** | Free (fly anywhere) and Orbit (auto-rotate around origin). Switch with `Space` |
 | **.ply and .splat files** | Standard 3DGS formats. Binary little-endian PLY with SH coefficients, 32-byte .splat records |
-| **Built-in demo scene** | Loads `scenes/luigi.ply` when available; falls back to a procedural torus knot. No files needed |
+| **Built-in scenes** | Bundled `bonsai.splat` (1.1M splats) and `luigi.ply` (14K). `--demo` generates a procedural torus knot — no files needed |
 | **Terminal detection** | Truecolor for modern terminals, perceptual 256-color fallback for Terminal.app. Zero config |
 | **Supersampling** | 1x/2x/3x factor for higher fidelity at the cost of compute |
 | **Cross-platform** | macOS and Linux |
@@ -110,14 +110,14 @@ Auto-detected via `COLORTERM`, `TERM_PROGRAM`, and `TERM` environment variables.
 
 | Device | CPU | Scene | Reference FPS |
 |--------|-----|-------|---------------|
-| Mac Mini M4 | Apple M4 | luigi.ply (965K) | 120+ |
+| Mac Mini M4 | Apple M4 | luigi.ply (14K) | 120+ |
 | Mac Mini M4 | Apple M4 | bonsai.splat (1.1M) | 80+ |
-| MacBook Air M2 | Apple M2 | luigi.ply (965K) | ✓ |
+| MacBook Air M2 | Apple M2 | luigi.ply (14K) | ✓ |
 | MacBook Air M2 | Apple M2 | bonsai.splat (1.1M) | 20–30 |
-| Jetson Orin Nano* | ARM Cortex-A78AE | luigi.ply (965K) | ~30 |
+| Jetson Orin Nano* | ARM Cortex-A78AE | luigi.ply (14K) | ~30 |
 | Jetson Orin Nano* | ARM Cortex-A78AE | bonsai.splat (1.1M) | 10–15 |
 
-FPS is approximate and depends heavily on terminal window size — a smaller window (⌘-) renders fewer cells and runs faster. *Jetson tested over SSH, which may be a bottleneck.
+Numbers in parentheses are splat counts. FPS is approximate and depends heavily on terminal window size — a smaller window (⌘-) renders fewer cells and runs faster. *Jetson tested over SSH, which may be a bottleneck.
 
 ## Where to get scenes
 

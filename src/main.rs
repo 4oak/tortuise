@@ -28,8 +28,9 @@ use terminal_setup::{cleanup_terminal, install_panic_hook};
 type AppResult<T> = Result<T, Box<dyn std::error::Error>>;
 
 #[derive(Debug, Parser)]
-#[command(name = "tortuise", about = "TUI Gaussian Splatting viewer")]
+#[command(name = "tortuise", version, about = "Terminal-native 3D Gaussian Splatting viewer")]
 struct Cli {
+    /// Path to a .ply or .splat scene file (runs demo if omitted)
     input: Option<PathBuf>,
     #[arg(long, help = "Force CPU rendering")]
     cpu: bool,

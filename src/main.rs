@@ -137,11 +137,18 @@ fn main() -> AppResult<()> {
     let scene_center = if splats.is_empty() {
         Vec3::ZERO
     } else {
-        let sum = splats
-            .iter()
-            .fold(Vec3::ZERO, |acc, s| Vec3::new(acc.x + s.position.x, acc.y + s.position.y, acc.z + s.position.z));
-        let n = splats.len() as f32;
-        Vec3::new(sum.x / n, sum.y / n, sum.z / n)
+        let (weighted_sum, total_opacity) = splats.iter().fold(
+            (Vec3::ZERO, 0.0f32),
+            |(acc, w), s| {
+                let o = s.opacity.max(0.0);
+                (Vec3::new(acc.x + s.position.x * o, acc.y + s.position.y * o, acc.z + s.position.z * o), w + o)
+            },
+        );
+        if total_opacity > 0.0 {
+            Vec3::new(weighted_sum.x / total_opacity, weighted_sum.y / total_opacity, weighted_sum.z / total_opacity)
+        } else {
+            Vec3::ZERO
+        }
     };
 
     let use_truecolor = match std::env::var("COLORTERM") {

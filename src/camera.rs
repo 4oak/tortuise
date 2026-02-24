@@ -101,10 +101,6 @@ pub fn adjust_yaw(camera: &mut Camera, delta: f32) {
     camera.update_vectors();
 }
 
-pub fn look_at_origin(camera: &mut Camera) {
-    look_at_target(camera, Vec3::ZERO);
-}
-
 pub fn look_at_target(camera: &mut Camera, target: Vec3) {
     let to_target = (target - camera.position).normalize();
     if to_target.length_squared() < 1e-8 {

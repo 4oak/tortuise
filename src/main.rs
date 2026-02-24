@@ -134,10 +134,10 @@ fn main() -> AppResult<()> {
         }
     }
 
-    // AABB-based camera placement: compute bounding box, place camera at framing distance.
-    // Standard 3D viewer approach — no centroid weighting, no vertical offsets.
-    let (scene_center, camera_start) = if splats.is_empty() {
-        (Vec3::ZERO, Vec3::new(0.0, 0.0, 5.0))
+    // Scene center: AABB center of all splats, used as orbit target only.
+    // Camera always starts at the original default (0, 0, 5) looking at origin.
+    let scene_center = if splats.is_empty() {
+        Vec3::ZERO
     } else {
         let mut min = Vec3::new(f32::INFINITY, f32::INFINITY, f32::INFINITY);
         let mut max = Vec3::new(f32::NEG_INFINITY, f32::NEG_INFINITY, f32::NEG_INFINITY);
@@ -149,19 +149,11 @@ fn main() -> AppResult<()> {
             max.y = max.y.max(s.position.y);
             max.z = max.z.max(s.position.z);
         }
-        let center = Vec3::new(
+        Vec3::new(
             (min.x + max.x) * 0.5,
             (min.y + max.y) * 0.5,
             (min.z + max.z) * 0.5,
-        );
-        let dx = max.x - min.x;
-        let dy = max.y - min.y;
-        let dz = max.z - min.z;
-        let diag = (dx * dx + dy * dy + dz * dz).sqrt();
-        let half_fov = std::f32::consts::PI / 6.0;
-        let dist = (diag * 0.5) / half_fov.tan() * 0.8;
-        let start = Vec3::new(center.x, center.y, center.z + dist);
-        (center, start)
+        )
     };
 
     let use_truecolor = match std::env::var("COLORTERM") {
@@ -179,8 +171,8 @@ fn main() -> AppResult<()> {
     let width = cols.max(1) as usize;
     let height = rows.max(1) as usize * 2;
 
-    let mut camera = Camera::new(camera_start, -std::f32::consts::FRAC_PI_2, 0.0);
-    camera::look_at_target(&mut camera, scene_center);
+    let mut camera = Camera::new(Vec3::new(0.0, 0.0, 5.0), -std::f32::consts::FRAC_PI_2, 0.0);
+    camera::look_at_target(&mut camera, Vec3::ZERO);
 
     #[cfg(feature = "metal")]
     let mut metal_backend = if backend == Backend::Metal {

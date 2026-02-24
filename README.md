@@ -61,7 +61,7 @@ tortuise --flip-z scene.splat
 tortuise [OPTIONS] [INPUT]
 
 Arguments:
-  [INPUT]    Path to a .ply or .splat scene file (runs demo if omitted)
+  [INPUT]    Path to a .ply or .splat scene file (use --demo for built-in scene)
 
 Options:
   --demo              Run built-in demo scene

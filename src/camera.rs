@@ -74,8 +74,9 @@ impl Camera {
     }
 }
 
-pub fn reset(camera: &mut Camera) {
-    *camera = Camera::new(Vec3::new(0.0, 0.0, 5.0), -std::f32::consts::FRAC_PI_2, 0.0);
+pub fn reset(camera: &mut Camera, start: Vec3, target: Vec3) {
+    *camera = Camera::new(start, -std::f32::consts::FRAC_PI_2, 0.0);
+    look_at_target(camera, target);
 }
 
 pub fn move_forward(camera: &mut Camera, distance: f32) {

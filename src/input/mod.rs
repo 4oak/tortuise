@@ -159,9 +159,11 @@ pub fn handle_input_event(app_state: &mut AppState, event: Event) -> AppResult<(
                         app_state.render_mode = app_state.render_mode.next();
                     }
                     'z' => {
-                        camera::reset(&mut app_state.camera);
+                        let start = app_state.camera_start;
+                        let target = app_state.scene_center;
+                        camera::reset(&mut app_state.camera, start, target);
                         app_state.camera_mode = CameraMode::Free;
-                        app_state.orbit_target = Vec3::ZERO;
+                        app_state.orbit_target = target;
                         app_state.orbit_angle = 0.0;
                         app_state.orbit_radius = 5.0;
                         app_state.orbit_height = 0.0;
@@ -221,6 +223,7 @@ mod tests {
             backend: Backend::Cpu,
             use_truecolor: false,
             scene_center: Vec3::ZERO,
+            camera_start: Vec3::new(0.0, 1.0, 5.0),
             #[cfg(feature = "metal")]
             metal_backend: None,
             #[cfg(feature = "metal")]

@@ -10,6 +10,7 @@ categories = ["command-line-utilities", "graphics", "rendering"]
 authors = ["Nick Oak"]
 readme = "README.md"
 rust-version = "1.80"
+exclude = ["scenes/bonsai.splat", "scenes/luigi.ply"]
 
 [features]
 default = []

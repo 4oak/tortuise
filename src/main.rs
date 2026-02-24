@@ -159,8 +159,13 @@ fn main() -> AppResult<()> {
     let width = cols.max(1) as usize;
     let height = rows.max(1) as usize * 2;
 
-    let mut camera = Camera::new(Vec3::new(0.0, 0.0, 5.0), -std::f32::consts::FRAC_PI_2, 0.0);
-    camera::look_at_origin(&mut camera);
+    // Place the camera 5 units in front of the scene centre (along +Z) and face it.
+    // Using scene_center here keeps the initial Free-mode view direction consistent
+    // with the orbit target, so pressing Space (Free → Orbit) no longer snaps the
+    // camera to a seemingly-random look direction.
+    let camera_start = Vec3::new(scene_center.x, scene_center.y, scene_center.z + 5.0);
+    let mut camera = Camera::new(camera_start, -std::f32::consts::FRAC_PI_2, 0.0);
+    camera::look_at_target(&mut camera, scene_center);
 
     #[cfg(feature = "metal")]
     let mut metal_backend = if backend == Backend::Metal {

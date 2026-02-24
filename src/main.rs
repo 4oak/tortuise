@@ -134,8 +134,7 @@ fn main() -> AppResult<()> {
         }
     }
 
-    // Scene center: AABB center of all splats, used as orbit target only.
-    // Camera always starts at the original default (0, 0, 5) looking at origin.
+    // Scene center: AABB center of all splats, used as orbit target and camera init.
     let scene_center = if splats.is_empty() {
         Vec3::ZERO
     } else {
@@ -171,8 +170,9 @@ fn main() -> AppResult<()> {
     let width = cols.max(1) as usize;
     let height = rows.max(1) as usize * 2;
 
-    let mut camera = Camera::new(Vec3::new(0.0, 0.0, 5.0), -std::f32::consts::FRAC_PI_2, 0.0);
-    camera::look_at_target(&mut camera, Vec3::ZERO);
+    let camera_start = Vec3::new(scene_center.x, scene_center.y, scene_center.z + 5.0);
+    let mut camera = Camera::new(camera_start, -std::f32::consts::FRAC_PI_2, 0.0);
+    camera::look_at_target(&mut camera, scene_center);
 
     #[cfg(feature = "metal")]
     let mut metal_backend = if backend == Backend::Metal {

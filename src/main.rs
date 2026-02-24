@@ -166,11 +166,17 @@ fn main() -> AppResult<()> {
     let width = cols.max(1) as usize;
     let height = rows.max(1) as usize * 2;
 
-    // Place the camera 5 units in front of the scene centre (along +Z) and face it.
-    // Using scene_center here keeps the initial Free-mode view direction consistent
-    // with the orbit target, so pressing Space (Free → Orbit) no longer snaps the
-    // camera to a seemingly-random look direction.
-    let camera_start = Vec3::new(scene_center.x, scene_center.y, scene_center.z + 5.0);
+    // Place the camera above and in front of the scene centre, looking down at it.
+    // Offset Y by 60% of the scene's vertical extent so the camera starts at a
+    // natural viewing angle rather than at centroid level (which is often ground/pot).
+    let y_extent = if splats.is_empty() {
+        1.0
+    } else {
+        let y_max = splats.iter().map(|s| s.position.y).fold(f32::NEG_INFINITY, f32::max);
+        let y_min = splats.iter().map(|s| s.position.y).fold(f32::INFINITY, f32::min);
+        (y_max - y_min).max(1.0)
+    };
+    let camera_start = Vec3::new(scene_center.x, scene_center.y + y_extent * 0.6, scene_center.z + 5.0);
     let mut camera = Camera::new(camera_start, -std::f32::consts::FRAC_PI_2, 0.0);
     camera::look_at_target(&mut camera, scene_center);
 

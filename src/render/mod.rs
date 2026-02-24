@@ -13,20 +13,67 @@ use crate::camera::Camera;
 use crate::splat::{ProjectedSplat, Splat};
 use crossterm::style::Color;
 
+/// Weighted perceptual distance squared (green 2x, red 1.5x, blue 1x sensitivity).
+fn perceptual_dist_sq(r1: u8, g1: u8, b1: u8, r2: u8, g2: u8, b2: u8) -> u32 {
+    let dr = r1 as i32 - r2 as i32;
+    let dg = g1 as i32 - g2 as i32;
+    let db = b1 as i32 - b2 as i32;
+    (2 * dr * dr + 4 * dg * dg + db * db) as u32
+}
+
 pub fn rgb_to_ansi256(r: u8, g: u8, b: u8) -> u8 {
-    if r == g && g == b {
-        if r < 8 {
-            return 16;
+    // --- Candidate 1: best match from 6x6x6 color cube (indices 16-231) ---
+    // Round each channel independently, then search ±1 neighbors for perceptual best.
+    let ri0 = ((r as f32 / 255.0 * 5.0) + 0.5) as i8;
+    let gi0 = ((g as f32 / 255.0 * 5.0) + 0.5) as i8;
+    let bi0 = ((b as f32 / 255.0 * 5.0) + 0.5) as i8;
+
+    let mut best_cube_idx: u8 = 16 + 36 * ri0 as u8 + 6 * gi0 as u8 + bi0 as u8;
+    let mut best_cube_dist = perceptual_dist_sq(r, g, b, ri0 as u8 * 51, gi0 as u8 * 51, bi0 as u8 * 51);
+
+    for dr in -1i8..=1 {
+        for dg in -1i8..=1 {
+            for db in -1i8..=1 {
+                let ri = ri0 + dr;
+                let gi = gi0 + dg;
+                let bi = bi0 + db;
+                if !(0..=5).contains(&ri) || !(0..=5).contains(&gi) || !(0..=5).contains(&bi) {
+                    continue;
+                }
+                let cr = ri as u8 * 51;
+                let cg = gi as u8 * 51;
+                let cb = bi as u8 * 51;
+                let d = perceptual_dist_sq(r, g, b, cr, cg, cb);
+                if d < best_cube_dist {
+                    best_cube_dist = d;
+                    best_cube_idx = 16 + 36 * ri as u8 + 6 * gi as u8 + bi as u8;
+                }
+            }
         }
-        if r > 248 {
-            return 231;
-        }
-        return 232 + ((r as f32 - 8.0) / 247.0 * 24.0) as u8;
     }
-    let ri = (r as f32 / 255.0 * 5.0 + 0.5) as u8;
-    let gi = (g as f32 / 255.0 * 5.0 + 0.5) as u8;
-    let bi = (b as f32 / 255.0 * 5.0 + 0.5) as u8;
-    16 + 36 * ri + 6 * gi + bi
+
+    // --- Candidate 2: grayscale ramp (indices 232-255, levels 8,18,...,238) ---
+    // Use it when channels are close (near-gray) OR exactly equal.
+    let max_ch = r.max(g).max(b);
+    let min_ch = r.min(g).min(b);
+    if max_ch - min_ch < 12 {
+        let avg = (r as u16 + g as u16 + b as u16) / 3;
+        if avg < 4 {
+            return 16; // near-black: use cube black
+        }
+        if avg > 246 {
+            return 231; // near-white: use cube white
+        }
+        // Nearest grayscale ramp entry: levels are 8 + 10*i for i in 0..24
+        let gi = (((avg as f32 - 8.0) / 10.0).round() as u8).min(23);
+        let gray_level = (8 + 10 * gi as u16) as u8;
+        let gray_dist = perceptual_dist_sq(r, g, b, gray_level, gray_level, gray_level);
+        if gray_dist <= best_cube_dist {
+            return 232 + gi;
+        }
+    }
+
+    best_cube_idx
 }
 
 pub fn make_color(r: u8, g: u8, b: u8, use_truecolor: bool) -> Color {

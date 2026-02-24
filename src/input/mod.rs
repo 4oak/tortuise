@@ -36,10 +36,10 @@ pub fn drain_input_events(
 
 /// Transition from Free camera to Orbit mode.
 ///
-/// Uses the point 5 units ahead of the camera as the orbit target,
-/// so orbiting is always centered on what you're looking at.
+/// Always orbits around the origin — WASD navigation does not shift the
+/// orbit center. Matches the pre-modal-camera behavior.
 fn transition_to_orbit(app_state: &mut AppState) {
-    let target = app_state.camera.position + app_state.camera.forward * 5.0;
+    let target = Vec3::ZERO;
     app_state.orbit_target = target;
 
     let dx = app_state.camera.position.x - target.x;

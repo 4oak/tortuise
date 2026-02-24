@@ -1,4 +1,14 @@
 /target
+_workbench/
+
+# Scene files (large) — only allow explicitly committed ones in scenes/
 *.ply
 *.splat
-_workbench/
+!scenes/*.ply
+!scenes/*.splat
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+*.swp

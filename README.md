@@ -104,6 +104,14 @@ Options:
 
 Auto-detected via `COLORTERM`, `TERM_PROGRAM`, and `TERM` environment variables. No configuration needed.
 
+## Tested hardware
+
+| Device | CPU | Scene | FPS |
+|--------|-----|-------|-----|
+| Mac Mini M4 | Apple M4 | luigi.ply (965K) | 120+ |
+| MacBook Air M2 | Apple M2 | luigi.ply (965K) | ✓ |
+| Jetson Orin Nano | ARM Cortex-A78AE | luigi.ply (965K) | ~30 |
+
 ## Where to get scenes
 
 - `tortuise --demo` for an instant procedural scene -- no downloads required

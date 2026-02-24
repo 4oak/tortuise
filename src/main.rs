@@ -111,10 +111,10 @@ fn main() -> AppResult<()> {
     }
 
     let use_truecolor = match std::env::var("COLORTERM") {
-        Ok(val) => val == "truecolor" || val == "24bit",
+        Ok(val) => !val.is_empty() && (val == "truecolor" || val == "24bit"),
         Err(_) => match std::env::var("TERM_PROGRAM") {
             Ok(prog) => prog != "Apple_Terminal",
-            Err(_) => true,
+            Err(_) => false,
         },
     };
 

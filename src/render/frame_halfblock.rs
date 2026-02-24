@@ -96,7 +96,7 @@ fn build_halfblock_cells_packed(
 fn write_ansi_command(buf: &mut String, command: impl Command) -> io::Result<()> {
     command
         .write_ansi(buf)
-        .map_err(|_| io::Error::new(io::ErrorKind::Other, "failed to encode ANSI command"))
+        .map_err(|_| io::Error::other("failed to encode ANSI command"))
 }
 
 pub fn render_halfblock_frame(

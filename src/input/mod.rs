@@ -36,12 +36,11 @@ pub fn drain_input_events(
 
 /// Transition from Free camera to Orbit mode.
 ///
-/// Computes the orbit target as a point along the camera's forward direction,
-/// then derives orbit parameters (radius, angle, height offset) from the
-/// camera's current position relative to that target.
+/// Uses the scene's centroid as the orbit target so orbiting is always
+/// centered on the actual scene content, not an arbitrary point in front
+/// of the camera.
 fn transition_to_orbit(app_state: &mut AppState) {
-    // Orbit target: point 5 units ahead along camera forward direction
-    let target = app_state.camera.position + app_state.camera.forward * 5.0;
+    let target = app_state.scene_center;
     app_state.orbit_target = target;
 
     let dx = app_state.camera.position.x - target.x;
@@ -221,6 +220,7 @@ mod tests {
             render_mode: RenderMode::Halfblock,
             backend: Backend::Cpu,
             use_truecolor: false,
+            scene_center: Vec3::ZERO,
             #[cfg(feature = "metal")]
             metal_backend: None,
             #[cfg(feature = "metal")]

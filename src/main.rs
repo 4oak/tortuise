@@ -134,6 +134,16 @@ fn main() -> AppResult<()> {
         }
     }
 
+    let scene_center = if splats.is_empty() {
+        Vec3::ZERO
+    } else {
+        let sum = splats
+            .iter()
+            .fold(Vec3::ZERO, |acc, s| Vec3::new(acc.x + s.position.x, acc.y + s.position.y, acc.z + s.position.z));
+        let n = splats.len() as f32;
+        Vec3::new(sum.x / n, sum.y / n, sum.z / n)
+    };
+
     let use_truecolor = match std::env::var("COLORTERM") {
         Ok(val) => !val.is_empty() && (val == "truecolor" || val == "24bit"),
         Err(_) => match std::env::var("TERM_PROGRAM") {
@@ -201,6 +211,7 @@ fn main() -> AppResult<()> {
         render_mode: RenderMode::Halfblock,
         backend,
         use_truecolor,
+        scene_center,
         #[cfg(feature = "metal")]
         metal_backend: metal_backend.take(),
         #[cfg(feature = "metal")]

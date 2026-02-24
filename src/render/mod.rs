@@ -190,6 +190,7 @@ pub struct AppState {
     pub render_mode: RenderMode,
     pub backend: Backend,
     pub use_truecolor: bool,
+    pub scene_center: Vec3,
     #[cfg(feature = "metal")]
     pub metal_backend: Option<crate::render::metal::MetalBackend>,
     #[cfg(feature = "metal")]

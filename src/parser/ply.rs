@@ -3,7 +3,7 @@ use std::path::Path;
 
 use crate::math::{clamp_u8, quat_normalize, sigmoid, Vec3};
 use crate::splat::Splat;
-type AppResult<T> = Result<T, Box<dyn std::error::Error>>;
+use crate::AppResult;
 
 #[derive(Debug, Clone, Copy)]
 enum PlyType {

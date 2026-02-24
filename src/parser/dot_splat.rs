@@ -4,7 +4,7 @@ use std::path::Path;
 use crate::math::{quat_normalize, Vec3};
 use crate::splat::Splat;
 
-type AppResult<T> = Result<T, Box<dyn std::error::Error>>;
+use crate::AppResult;
 
 fn read_vec3_f32(bytes: &[u8]) -> Vec3 {
     let x = f32::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]);

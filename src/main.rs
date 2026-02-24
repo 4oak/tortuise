@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{CommandFactory, Parser};
 use crossterm::{
     cursor,
     event::{KeyboardEnhancementFlags, PushKeyboardEnhancementFlags},
@@ -25,14 +25,15 @@ use render::frame::run_app_loop;
 use render::{AppState, Backend, CameraMode, RenderMode, RenderState};
 use terminal_setup::{cleanup_terminal, install_panic_hook};
 
-type AppResult<T> = Result<T, Box<dyn std::error::Error>>;
+pub type AppResult<T> = Result<T, Box<dyn std::error::Error>>;
 
 #[derive(Debug, Parser)]
 #[command(name = "tortuise", version, about = "Terminal-native 3D Gaussian Splatting viewer")]
 struct Cli {
-    /// Path to a .ply or .splat scene file (runs demo if omitted)
+    /// Path to a .ply or .splat scene file
     input: Option<PathBuf>,
-    #[arg(long, help = "Force CPU rendering")]
+    #[cfg(feature = "metal")]
+    #[arg(long, help = "Force CPU rendering", conflicts_with = "metal")]
     cpu: bool,
     #[cfg(feature = "metal")]
     #[arg(long, help = "Force Metal GPU rendering", conflicts_with = "cpu")]
@@ -71,7 +72,7 @@ fn find_luigi_ply() -> Option<PathBuf> {
 }
 
 fn load_splats_from_cli(cli: &Cli) -> AppResult<Vec<splat::Splat>> {
-    if cli.demo || cli.input.is_none() {
+    if cli.demo {
         // Try to load luigi.ply; fall back to procedural demo if not found
         if let Some(luigi_path) = find_luigi_ply() {
             let path_str = luigi_path.to_str().ok_or("luigi.ply path is non-UTF-8")?;
@@ -80,10 +81,7 @@ fn load_splats_from_cli(cli: &Cli) -> AppResult<Vec<splat::Splat>> {
         return Ok(demo::generate_demo_splats());
     }
 
-    let path = match cli.input.as_ref() {
-        Some(path) => path,
-        None => return Ok(demo::generate_demo_splats()),
-    };
+    let path = cli.input.as_ref().expect("input is Some; checked before dispatch");
 
     let ext = path
         .extension()
@@ -112,6 +110,12 @@ fn load_splats_from_cli(cli: &Cli) -> AppResult<Vec<splat::Splat>> {
 fn main() -> AppResult<()> {
     install_panic_hook();
     let cli = Cli::parse();
+
+    if cli.input.is_none() && !cli.demo {
+        Cli::command().print_help()?;
+        println!();
+        std::process::exit(0);
+    }
 
     #[cfg(feature = "metal")]
     let mut backend = if cli.cpu {

@@ -7,7 +7,7 @@ use crate::render::{AppState, CameraMode};
 use crossterm::event::{Event, KeyCode, KeyEventKind};
 use std::sync::mpsc::{Receiver, TryRecvError};
 
-pub type AppResult<T> = Result<T, Box<dyn std::error::Error>>;
+use crate::AppResult;
 
 pub fn drain_input_events(
     app_state: &mut AppState,

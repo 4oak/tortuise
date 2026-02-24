@@ -122,7 +122,7 @@ FPS is approximate and depends heavily on terminal window size — a smaller win
 ## Where to get scenes
 
 - `tortuise --demo` for an instant procedural scene -- no downloads required
-- [Luma AI](https://lumalabs.ai/explore) -- large gallery of captured scenes, many export to .splat
+- [SuperSplat](https://superspl.at/) -- open-source editor and converter for Gaussian splat scenes
 - [Polycam](https://poly.cam/explore) -- photogrammetry captures, some with Gaussian splat export
 - [nerfstudio](https://docs.nerf.studio/) -- train your own splats from video, exports to .ply
 - Any standard 3DGS pipeline output in .ply or .splat format

@@ -100,7 +100,7 @@ pub fn make_color(r: u8, g: u8, b: u8, use_truecolor: bool) -> Color {
     }
 }
 
-pub type AppResult<T> = Result<T, Box<dyn std::error::Error>>;
+pub use crate::AppResult;
 pub type HalfblockCell = ([u8; 3], [u8; 3]);
 
 pub const HALF_BLOCK: char = '\u{2584}';

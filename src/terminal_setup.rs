@@ -6,7 +6,7 @@ use crossterm::{
 use std::io::{self, BufWriter, Write};
 use std::panic;
 
-type AppResult<T> = Result<T, Box<dyn std::error::Error>>;
+use crate::AppResult;
 
 pub fn install_panic_hook() {
     let default_hook = panic::take_hook();

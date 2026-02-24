@@ -114,7 +114,10 @@ fn main() -> AppResult<()> {
         Ok(val) => !val.is_empty() && (val == "truecolor" || val == "24bit"),
         Err(_) => match std::env::var("TERM_PROGRAM") {
             Ok(prog) => prog != "Apple_Terminal",
-            Err(_) => false,
+            Err(_) => match std::env::var("TERM") {
+                Ok(term) => term.contains("ghostty") || term.contains("kitty") || term.contains("wezterm"),
+                Err(_) => false,
+            },
         },
     };
 

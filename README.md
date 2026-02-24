@@ -1,19 +1,19 @@
 # tortuise
 
-Gaussian splats in your terminal.
+Gaussian splats viewer that works in your terminal. Yes, it's made of symbols!
 
 ![tortuise demo](assets/demo.webp)
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Linux-lightgrey)
 
+A CPU-first 3D Gaussian Splatting viewer built on [ratatui](https://github.com/ratatui/ratatui). Fully parallelized rendering pipeline via [rayon](https://github.com/rayon-rs/rayon), perceptual color mapping, six render modes — all running on pure CPU. Real scenes with 1.1M splats hold 10–25 FPS. No GPU required.
+
 ## Why this exists
 
-I've been fascinated by Gaussian splats since they first appeared -- that feeling when a point cloud suddenly snaps into a photorealistic scene is hard to shake. Then I binge-watched *Common Side Effects* over a weekend, caught a properly nasty cold, and needed something to decompress with that wasn't another episode. Somewhere between the cough syrup and episode six I realized: nobody had built a terminal viewer for 3DGS. Every viewer out there wants a browser or a GPU window. The itch was obvious. So I built one.
+Gaussian splats are beautiful tech. The moment a point cloud snaps into a photorealistic scene still hits different. Especially now, with image-to-splat pipelines like [SHARP](https://github.com/apple/ml-sharp) making 3D capture from a single image trivially easy. (SHARP integration is [coming to tortuise soon](#roadmap).)
 
-The name is a nod to the show and a hat-tip to the TUI ecosystem -- ratatouille begat ratatui, and ratatui begat tor-TUI-se. A tortoise carrying a 3D scene on its back.
-
-Turns out 45K splats render just fine in Unicode half-block characters. Real scenes with 1M+ splats work too -- you just need a terminal that can keep up.
+The name tells the origin story: ratatouille begat [ratatui](https://github.com/ratatui/ratatui), ratatui begat tor-**TUI**-se. Inspiration by the ratatui ecosystem merged with a weekend binge of *Common Side Effects* — and the realization that nobody had built a terminal viewer for 3DGS. That's how a tortoise ended up carrying a 3D scene on its back.
 
 ## Features
 

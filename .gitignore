@@ -7,6 +7,9 @@ _workbench/
 !scenes/*.ply
 !scenes/*.splat
 
+# Media / scratch
+random/
+
 # OS / editor
 .DS_Store
 .vscode/

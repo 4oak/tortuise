@@ -11,9 +11,9 @@ A CPU-first 3D Gaussian Splatting viewer built on [ratatui](https://github.com/r
 
 ## Why this exists
 
-Gaussian splats are beautiful tech. The moment a point cloud snaps into a photorealistic scene still hits different. Especially now, with image-to-splat pipelines like [SHARP](https://github.com/apple/ml-sharp) making 3D capture from a single image trivially easy. (SHARP integration is [coming to tortuise soon](#roadmap).)
+Gaussian Splats are cool. Beautiful tech. Especially now with the rise of image-to-splat pipelines like [SHARP](https://github.com/apple/ml-sharp). Btw, it will be soon available [here](#roadmap).
 
-The name tells the origin story: ratatouille begat [ratatui](https://github.com/ratatui/ratatui), ratatui begat tor-**TUI**-se. Inspiration by the ratatui ecosystem merged with a weekend binge of *Common Side Effects* — and the realization that nobody had built a terminal viewer for 3DGS. That's how a tortoise ended up carrying a 3D scene on its back.
+Inspiration by [ratatui](https://github.com/ratatui/ratatui) merged with binge watching of *Common Side Effects* which resulted in building this "The Tortuise" TUI 3GS viewer.
 
 ## Features
 

@@ -134,21 +134,34 @@ fn main() -> AppResult<()> {
         }
     }
 
-    let scene_center = if splats.is_empty() {
-        Vec3::ZERO
+    // AABB-based camera placement: compute bounding box, place camera at framing distance.
+    // Standard 3D viewer approach — no centroid weighting, no vertical offsets.
+    let (scene_center, camera_start) = if splats.is_empty() {
+        (Vec3::ZERO, Vec3::new(0.0, 0.0, 5.0))
     } else {
-        let (weighted_sum, total_opacity) = splats.iter().fold(
-            (Vec3::ZERO, 0.0f32),
-            |(acc, w), s| {
-                let o = s.opacity.max(0.0);
-                (Vec3::new(acc.x + s.position.x * o, acc.y + s.position.y * o, acc.z + s.position.z * o), w + o)
-            },
-        );
-        if total_opacity > 0.0 {
-            Vec3::new(weighted_sum.x / total_opacity, weighted_sum.y / total_opacity, weighted_sum.z / total_opacity)
-        } else {
-            Vec3::ZERO
+        let mut min = Vec3::new(f32::INFINITY, f32::INFINITY, f32::INFINITY);
+        let mut max = Vec3::new(f32::NEG_INFINITY, f32::NEG_INFINITY, f32::NEG_INFINITY);
+        for s in &splats {
+            min.x = min.x.min(s.position.x);
+            min.y = min.y.min(s.position.y);
+            min.z = min.z.min(s.position.z);
+            max.x = max.x.max(s.position.x);
+            max.y = max.y.max(s.position.y);
+            max.z = max.z.max(s.position.z);
         }
+        let center = Vec3::new(
+            (min.x + max.x) * 0.5,
+            (min.y + max.y) * 0.5,
+            (min.z + max.z) * 0.5,
+        );
+        let dx = max.x - min.x;
+        let dy = max.y - min.y;
+        let dz = max.z - min.z;
+        let diag = (dx * dx + dy * dy + dz * dz).sqrt();
+        let half_fov = std::f32::consts::PI / 6.0;
+        let dist = (diag * 0.5) / half_fov.tan() * 0.8;
+        let start = Vec3::new(center.x, center.y, center.z + dist);
+        (center, start)
     };
 
     let use_truecolor = match std::env::var("COLORTERM") {
@@ -166,17 +179,6 @@ fn main() -> AppResult<()> {
     let width = cols.max(1) as usize;
     let height = rows.max(1) as usize * 2;
 
-    // Place the camera above and in front of the scene centre, looking down at it.
-    // Offset Y by 60% of the scene's vertical extent so the camera starts at a
-    // natural viewing angle rather than at centroid level (which is often ground/pot).
-    let y_extent = if splats.is_empty() {
-        1.0
-    } else {
-        let y_max = splats.iter().map(|s| s.position.y).fold(f32::NEG_INFINITY, f32::max);
-        let y_min = splats.iter().map(|s| s.position.y).fold(f32::INFINITY, f32::min);
-        (y_max - y_min).max(1.0)
-    };
-    let camera_start = Vec3::new(scene_center.x, scene_center.y + y_extent * 0.6, scene_center.z + 5.0);
     let mut camera = Camera::new(camera_start, -std::f32::consts::FRAC_PI_2, 0.0);
     camera::look_at_target(&mut camera, scene_center);
 

@@ -52,8 +52,31 @@ struct Cli {
     supersample: u32,
 }
 
+fn find_luigi_ply() -> Option<PathBuf> {
+    // 1. Check relative to cwd
+    let cwd_candidate = PathBuf::from("scenes/luigi.ply");
+    if cwd_candidate.exists() {
+        return Some(cwd_candidate);
+    }
+    // 2. Check next to the executable
+    if let Ok(exe_path) = std::env::current_exe() {
+        if let Some(exe_dir) = exe_path.parent() {
+            let exe_candidate = exe_dir.join("scenes/luigi.ply");
+            if exe_candidate.exists() {
+                return Some(exe_candidate);
+            }
+        }
+    }
+    None
+}
+
 fn load_splats_from_cli(cli: &Cli) -> AppResult<Vec<splat::Splat>> {
     if cli.demo || cli.input.is_none() {
+        // Try to load luigi.ply; fall back to procedural demo if not found
+        if let Some(luigi_path) = find_luigi_ply() {
+            let path_str = luigi_path.to_str().ok_or("luigi.ply path is non-UTF-8")?;
+            return parser::ply::load_ply_file(path_str);
+        }
         return Ok(demo::generate_demo_splats());
     }
 

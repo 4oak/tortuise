@@ -9,6 +9,7 @@ keywords = ["gaussian-splatting", "tui", "3d", "terminal", "rendering"]
 categories = ["command-line-utilities", "graphics", "rendering"]
 authors = ["Nick Oak"]
 readme = "README.md"
+rust-version = "1.80"
 
 [features]
 default = []

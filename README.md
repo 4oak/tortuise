@@ -30,6 +30,8 @@ Turns out 45K splats render just fine in Unicode half-block characters. Real sce
 
 ## Quick start
 
+**Requires Rust 1.80+** (`rustup update` to upgrade)
+
 ```bash
 # From source (recommended for now)
 git clone https://github.com/buildoak/tortuise.git

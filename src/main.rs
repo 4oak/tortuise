@@ -134,33 +134,6 @@ fn main() -> AppResult<()> {
         }
     }
 
-    // Scene center: AABB center of all splats, used as orbit target and camera init.
-    // scene_radius: half the AABB diagonal, used to scale the initial camera standoff distance.
-    let (scene_center, aabb_max_y, scene_radius) = if splats.is_empty() {
-        (Vec3::ZERO, 1.0_f32, 1.0_f32)
-    } else {
-        let mut min = Vec3::new(f32::INFINITY, f32::INFINITY, f32::INFINITY);
-        let mut max = Vec3::new(f32::NEG_INFINITY, f32::NEG_INFINITY, f32::NEG_INFINITY);
-        for s in &splats {
-            min.x = min.x.min(s.position.x);
-            min.y = min.y.min(s.position.y);
-            min.z = min.z.min(s.position.z);
-            max.x = max.x.max(s.position.x);
-            max.y = max.y.max(s.position.y);
-            max.z = max.z.max(s.position.z);
-        }
-        let center = Vec3::new(
-            (min.x + max.x) * 0.5,
-            (min.y + max.y) * 0.5,
-            (min.z + max.z) * 0.5,
-        );
-        let dx = max.x - min.x;
-        let dy = max.y - min.y;
-        let dz = max.z - min.z;
-        let radius = (dx * dx + dy * dy + dz * dz).sqrt() * 0.5;
-        (center, max.y, radius.max(1.0))
-    };
-
     let use_truecolor = match std::env::var("COLORTERM") {
         Ok(val) => !val.is_empty() && (val == "truecolor" || val == "24bit"),
         Err(_) => match std::env::var("TERM_PROGRAM") {
@@ -176,11 +149,8 @@ fn main() -> AppResult<()> {
     let width = cols.max(1) as usize;
     let height = rows.max(1) as usize * 2;
 
-    // Stand off by ~1.2x the scene radius so the whole scene fits in view regardless of scale.
-    let standoff = (scene_radius * 1.2).max(5.0);
-    let camera_start = Vec3::new(scene_center.x, aabb_max_y + scene_radius * 0.2, scene_center.z + standoff);
-    let mut camera = Camera::new(camera_start, -std::f32::consts::FRAC_PI_2, 0.0);
-    camera::look_at_target(&mut camera, scene_center);
+    let mut camera = Camera::new(Vec3::new(0.0, 0.0, 5.0), -std::f32::consts::FRAC_PI_2, 0.0);
+    camera::look_at_target(&mut camera, Vec3::ZERO);
 
     #[cfg(feature = "metal")]
     let mut metal_backend = if backend == Backend::Metal {
@@ -218,21 +188,19 @@ fn main() -> AppResult<()> {
         input_state: input::state::InputState::default(),
         show_hud: true,
         camera_mode: CameraMode::Free,
-        move_speed: (scene_radius * 0.05).clamp(0.15, 2.0),
+        move_speed: 0.15,
         frame_count: 0,
         last_frame_time: Instant::now(),
         fps: 0.0,
         visible_splat_count: 0,
         orbit_angle: 0.0,
-        orbit_radius: standoff,
+        orbit_radius: 5.0,
         orbit_height: 0.0,
         orbit_target: Vec3::ZERO,
         supersample_factor: cli.supersample.max(1),
         render_mode: RenderMode::Halfblock,
         backend,
         use_truecolor,
-        scene_center,
-        camera_start,
         #[cfg(feature = "metal")]
         metal_backend: metal_backend.take(),
         #[cfg(feature = "metal")]

@@ -2,6 +2,7 @@ pub mod state;
 pub mod thread;
 
 use crate::camera;
+use crate::math::Vec3;
 use crate::render::{AppState, CameraMode};
 use crossterm::event::{Event, KeyCode, KeyEventKind};
 use std::sync::mpsc::{Receiver, TryRecvError};
@@ -35,11 +36,10 @@ pub fn drain_input_events(
 
 /// Transition from Free camera to Orbit mode.
 ///
-/// Uses the scene's centroid as the orbit target so orbiting is always
-/// centered on the actual scene content, not an arbitrary point in front
-/// of the camera.
+/// Uses the point 5 units ahead of the camera as the orbit target,
+/// so orbiting is always centered on what you're looking at.
 fn transition_to_orbit(app_state: &mut AppState) {
-    let target = app_state.scene_center;
+    let target = app_state.camera.position + app_state.camera.forward * 5.0;
     app_state.orbit_target = target;
 
     let dx = app_state.camera.position.x - target.x;
@@ -158,11 +158,9 @@ pub fn handle_input_event(app_state: &mut AppState, event: Event) -> AppResult<(
                         app_state.render_mode = app_state.render_mode.next();
                     }
                     'z' => {
-                        let start = app_state.camera_start;
-                        let target = app_state.scene_center;
-                        camera::reset(&mut app_state.camera, start, target);
+                        camera::reset(&mut app_state.camera, Vec3::new(0.0, 0.0, 5.0), Vec3::ZERO);
                         app_state.camera_mode = CameraMode::Free;
-                        app_state.orbit_target = target;
+                        app_state.orbit_target = Vec3::ZERO;
                         app_state.orbit_angle = 0.0;
                         app_state.orbit_radius = 5.0;
                         app_state.orbit_height = 0.0;
@@ -186,7 +184,6 @@ pub fn handle_input_event(app_state: &mut AppState, event: Event) -> AppResult<(
 mod tests {
     use super::*;
     use crate::camera::Camera;
-    use crate::math::Vec3;
     use crate::render::{AppState, Backend, CameraMode, RenderMode, RenderState};
     use std::sync::mpsc;
     use std::time::Instant;
@@ -221,8 +218,6 @@ mod tests {
             render_mode: RenderMode::Halfblock,
             backend: Backend::Cpu,
             use_truecolor: false,
-            scene_center: Vec3::ZERO,
-            camera_start: Vec3::new(0.0, 1.0, 5.0),
             #[cfg(feature = "metal")]
             metal_backend: None,
             #[cfg(feature = "metal")]

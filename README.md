@@ -2,7 +2,7 @@
 
 Gaussian splats in your terminal.
 
-![tortuise demo](assets/demo.gif)
+![tortuise demo](assets/demo.webp)
 
 [![Crates.io](https://img.shields.io/crates/v/tortuise)](https://crates.io/crates/tortuise)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)

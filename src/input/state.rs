@@ -38,7 +38,7 @@ mod tests {
     use super::*;
     use crate::camera::Camera;
     use crate::math::Vec3;
-    use crate::render::{AppState, Backend, RenderMode, RenderState};
+    use crate::render::{AppState, Backend, CameraMode, RenderMode, RenderState};
     use std::time::Instant;
 
     fn make_state() -> AppState {
@@ -57,7 +57,7 @@ mod tests {
             hud_string_buf: String::new(),
             input_state: InputState::default(),
             show_hud: true,
-            auto_orbit: false,
+            camera_mode: CameraMode::Free,
             move_speed: 2.0,
             frame_count: 0,
             last_frame_time: Instant::now(),
@@ -66,9 +66,11 @@ mod tests {
             orbit_angle: 0.0,
             orbit_radius: 5.0,
             orbit_height: 0.0,
+            orbit_target: Vec3::ZERO,
             supersample_factor: 1,
             render_mode: RenderMode::Halfblock,
             backend: Backend::Cpu,
+            use_truecolor: false,
             #[cfg(feature = "metal")]
             metal_backend: None,
             #[cfg(feature = "metal")]

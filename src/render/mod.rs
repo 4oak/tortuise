@@ -10,8 +10,24 @@ pub mod rasterizer;
 use std::time::Instant;
 
 use crate::camera::Camera;
+use crate::math::Vec3;
 use crate::splat::{ProjectedSplat, Splat};
 use crossterm::style::Color;
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum CameraMode {
+    Free,
+    Orbit,
+}
+
+impl CameraMode {
+    pub fn name(&self) -> &'static str {
+        match self {
+            Self::Free => "FREE",
+            Self::Orbit => "ORBIT",
+        }
+    }
+}
 
 /// Weighted perceptual distance squared (green 2x, red 1.5x, blue 1x sensitivity).
 fn perceptual_dist_sq(r1: u8, g1: u8, b1: u8, r2: u8, g2: u8, b2: u8) -> u32 {
@@ -160,7 +176,7 @@ pub struct AppState {
     pub hud_string_buf: String,
     pub input_state: crate::input::state::InputState,
     pub show_hud: bool,
-    pub auto_orbit: bool,
+    pub camera_mode: CameraMode,
     pub move_speed: f32,
     pub frame_count: u64,
     pub last_frame_time: Instant,
@@ -169,6 +185,7 @@ pub struct AppState {
     pub orbit_angle: f32,
     pub orbit_radius: f32,
     pub orbit_height: f32,
+    pub orbit_target: Vec3,
     pub supersample_factor: u32,
     pub render_mode: RenderMode,
     pub backend: Backend,

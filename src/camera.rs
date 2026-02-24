@@ -97,11 +97,15 @@ pub fn adjust_yaw(camera: &mut Camera, delta: f32) {
 }
 
 pub fn look_at_origin(camera: &mut Camera) {
-    let to_origin = (Vec3::ZERO - camera.position).normalize();
-    if to_origin.length_squared() < 1e-8 {
+    look_at_target(camera, Vec3::ZERO);
+}
+
+pub fn look_at_target(camera: &mut Camera, target: Vec3) {
+    let to_target = (target - camera.position).normalize();
+    if to_target.length_squared() < 1e-8 {
         return;
     }
-    camera.yaw = to_origin.z.atan2(to_origin.x);
-    camera.pitch = to_origin.y.clamp(-1.0, 1.0).asin();
+    camera.yaw = to_target.z.atan2(to_target.x);
+    camera.pitch = to_target.y.clamp(-1.0, 1.0).asin();
     camera.update_vectors();
 }

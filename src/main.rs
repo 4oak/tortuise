@@ -21,8 +21,8 @@ mod terminal_setup;
 
 use camera::Camera;
 use math::Vec3;
-use render::frame::{run_app_loop, sync_orbit_from_camera};
-use render::{AppState, Backend, RenderMode, RenderState};
+use render::frame::run_app_loop;
+use render::{AppState, Backend, CameraMode, RenderMode, RenderState};
 use terminal_setup::{cleanup_terminal, install_panic_hook};
 
 type AppResult<T> = Result<T, Box<dyn std::error::Error>>;
@@ -163,7 +163,7 @@ fn main() -> AppResult<()> {
         hud_string_buf: String::with_capacity(512),
         input_state: input::state::InputState::default(),
         show_hud: true,
-        auto_orbit: false,
+        camera_mode: CameraMode::Free,
         move_speed: 0.15,
         frame_count: 0,
         last_frame_time: Instant::now(),
@@ -172,6 +172,7 @@ fn main() -> AppResult<()> {
         orbit_angle: 0.0,
         orbit_radius: 5.0,
         orbit_height: 0.0,
+        orbit_target: Vec3::ZERO,
         supersample_factor: cli.supersample.max(1),
         render_mode: RenderMode::Halfblock,
         backend,
@@ -183,7 +184,6 @@ fn main() -> AppResult<()> {
         #[cfg(feature = "metal")]
         gpu_fallback_active: false,
     };
-    sync_orbit_from_camera(&mut app_state);
 
     crossterm::terminal::enable_raw_mode()?;
     let input_rx = input::thread::spawn_input_thread();

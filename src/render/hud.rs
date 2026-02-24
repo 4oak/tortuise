@@ -46,7 +46,7 @@ pub fn draw_hud(
     hud.clear();
     write!(
         hud,
-        "FPS:{:>5.1}  Splats:{}/{}  Pos:({:>6.2},{:>6.2},{:>6.2})  Speed:{:.2}  Orbit:{}  Mode:{}  Backend:{}  SS:",
+        "FPS:{:>5.1}  Splats:{}/{}  Pos:({:>6.2},{:>6.2},{:>6.2})  Speed:{:.2}  Cam:{}  Mode:{}  Backend:{}  SS:",
         app_state.fps,
         app_state.visible_splat_count,
         app_state.splats.len(),
@@ -54,7 +54,7 @@ pub fn draw_hud(
         app_state.camera.position.y,
         app_state.camera.position.z,
         app_state.move_speed,
-        if app_state.auto_orbit { "ON" } else { "OFF" },
+        app_state.camera_mode.name(),
         app_state.render_mode.name(),
         app_state.backend.name()
     )
@@ -97,8 +97,14 @@ pub fn draw_hud(
         Print(hud.as_str())
     )?;
 
-    let controls =
-        "WASD:Move  Arrows:Look  +/-:Speed  Space:Orbit  M:Mode  Tab:HUD  R:Reset  Q/Esc:Quit";
+    let controls = match app_state.camera_mode {
+        super::CameraMode::Free => {
+            "WASD:Move  Arrows:Look  +/-:Speed  Space:Orbit  M:Mode  Tab:HUD  R:Reset  Q/Esc:Quit"
+        }
+        super::CameraMode::Orbit => {
+            "Arrows:Elevation/Nudge  +/-:Speed  Space:Free cam  M:Mode  Tab:HUD  R:Reset  Q/Esc:Quit"
+        }
+    };
     hud.clear();
     hud.push_str(controls);
     truncate_and_pad_in_place(hud, width);

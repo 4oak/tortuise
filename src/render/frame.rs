@@ -2,33 +2,20 @@ use crossterm::{queue, style::ResetColor, terminal};
 use std::io::{self, Write};
 use std::time::Instant;
 
-use super::{AppResult, AppState, RenderMode, FRAME_TARGET};
+use super::{AppResult, AppState, CameraMode, RenderMode, FRAME_TARGET};
 
 const HALFBLOCK_FRAME_TARGET: std::time::Duration = std::time::Duration::from_millis(33);
 
-pub fn sync_orbit_from_camera(app_state: &mut AppState) {
-    let radius_xz = (app_state.camera.position.x * app_state.camera.position.x
-        + app_state.camera.position.z * app_state.camera.position.z)
-        .sqrt()
-        .max(0.1);
-    app_state.orbit_radius = radius_xz;
-    app_state.orbit_angle = app_state
-        .camera
-        .position
-        .z
-        .atan2(app_state.camera.position.x);
-    app_state.orbit_height = app_state.camera.position.y;
-}
-
-fn update_auto_orbit(app_state: &mut AppState, delta_time: f32) {
+fn update_orbit(app_state: &mut AppState, delta_time: f32) {
     let orbit_speed = 0.9 * app_state.move_speed;
     app_state.orbit_angle += orbit_speed * delta_time;
 
-    app_state.camera.position.x = app_state.orbit_radius * app_state.orbit_angle.cos();
-    app_state.camera.position.z = app_state.orbit_radius * app_state.orbit_angle.sin();
-    app_state.camera.position.y = app_state.orbit_height;
+    let target = app_state.orbit_target;
+    app_state.camera.position.x = target.x + app_state.orbit_radius * app_state.orbit_angle.cos();
+    app_state.camera.position.z = target.z + app_state.orbit_radius * app_state.orbit_angle.sin();
+    app_state.camera.position.y = target.y + app_state.orbit_height;
 
-    crate::camera::look_at_origin(&mut app_state.camera);
+    crate::camera::look_at_target(&mut app_state.camera, target);
 }
 
 pub fn render_frame(
@@ -135,10 +122,12 @@ pub fn run_app_loop(
             .max(1e-6);
         app_state.last_frame_time = now;
 
-        if app_state.auto_orbit {
-            update_auto_orbit(app_state, delta_time);
+        match app_state.camera_mode {
+            CameraMode::Orbit => update_orbit(app_state, delta_time),
+            CameraMode::Free => {
+                crate::input::state::apply_movement_from_held_keys(app_state, delta_time);
+            }
         }
-        crate::input::state::apply_movement_from_held_keys(app_state, delta_time);
 
         let terminal_size = terminal::size()?;
         render_frame(app_state, terminal_size, stdout)?;

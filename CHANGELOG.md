@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.1] - 2026-02-24
 
+### Added
+- `scripts/supersplat-dl.sh` — download any SuperSplat scene as a tortuise-compatible PLY in one command
+- GitHub Actions CI (build, test, clippy, fmt on macOS + Linux)
+- CONTRIBUTING.md and CHANGELOG.md
+
 ### Fixed
 - Camera init restored to proven `(0,0,5)` at origin; all AABB/scene-center heuristics removed
 - Orbit mode always targets origin; WASD no longer shifts the orbit center

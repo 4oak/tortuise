@@ -27,7 +27,7 @@ Inspiration by [ratatui](https://github.com/ratatui/ratatui) merged with binge w
 | **Full 3D navigation** | WASD movement, R/F vertical, arrow keys for yaw/pitch. Smooth held-key input |
 | **Two camera modes** | Free (fly anywhere) and Orbit (auto-rotate around origin). Switch with `Space` |
 | **.ply and .splat files** | Standard 3DGS formats. Binary little-endian PLY with SH coefficients, 32-byte .splat records |
-| **Built-in scenes** | Bundled `bonsai.splat` (1.1M splats) and `luigi.ply` (14K). `--demo` loads luigi |
+| **Built-in scenes** | Bundled `bonsai.splat` (1.1M splats) and `luigi.ply` (14K). `--demo` runs a built-in demo scene |
 | **Terminal detection** | Truecolor for modern terminals, perceptual 256-color fallback for Terminal.app. Zero config |
 | **Supersampling** | 1x/2x/3x factor for higher fidelity at the cost of compute |
 | **Cross-platform** | macOS and Linux |

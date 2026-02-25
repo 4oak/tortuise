@@ -126,8 +126,20 @@ Numbers in parentheses are splat counts. FPS is approximate and depends heavily 
 
 ## Where to get scenes
 
-- `tortuise --demo` for an instant procedural scene -- no downloads required
-- [SuperSplat](https://superspl.at/) -- open-source editor and converter for Gaussian splat scenes
+The fastest way to get a real scene into tortuise is to grab one from [SuperSplat](https://superspl.at/) -- thousands of community-uploaded Gaussian splat scenes. The included `scripts/supersplat-dl.sh` downloads and converts any SuperSplat scene to a standard PLY in one command:
+
+```bash
+# Download a SuperSplat scene (paste any share URL or scene ID)
+./scripts/supersplat-dl.sh "https://superspl.at/s?id=cf6ac78e" bee.ply
+
+# View it
+tortuise bee.ply
+```
+
+Requires **Node.js 16+** and **curl** (for `npx @playcanvas/splat-transform` under the hood).
+
+Other sources:
+- `tortuise --demo` -- instant built-in demo scene, no downloads required
 - [Polycam](https://poly.cam/explore) -- photogrammetry captures, some with Gaussian splat export
 - [nerfstudio](https://docs.nerf.studio/) -- train your own splats from video, exports to .ply
 - Any standard 3DGS pipeline output in .ply or .splat format

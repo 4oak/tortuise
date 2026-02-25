@@ -83,11 +83,14 @@ done
 extract_id() {
     local input="$1"
 
-    # Full URL: extract id= parameter
+    # Full URL: extract scene ID
     if [[ "$input" =~ ^https?:// ]]; then
         local id
-        # Try ?id= or &id=
+        # Try ?id= or &id= (e.g. superspl.at/s?id=cf6ac78e)
         if [[ "$input" =~ [?\&]id=([a-zA-Z0-9_-]+) ]]; then
+            id="${BASH_REMATCH[1]}"
+        # Try /scene/{id} path (e.g. superspl.at/scene/3dc55763)
+        elif [[ "$input" =~ /scene/([a-zA-Z0-9_-]+) ]]; then
             id="${BASH_REMATCH[1]}"
         else
             die "could not extract scene ID from URL: ${input}"

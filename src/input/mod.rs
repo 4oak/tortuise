@@ -108,10 +108,7 @@ pub fn handle_input_event(app_state: &mut AppState, event: Event) -> AppResult<(
                 // Arrow keys: modal behavior
                 KeyCode::Up => match app_state.camera_mode {
                     CameraMode::Free => {
-                        camera::adjust_pitch(
-                            &mut app_state.camera,
-                            0.08 * app_state.move_speed,
-                        );
+                        camera::adjust_pitch(&mut app_state.camera, 0.08 * app_state.move_speed);
                     }
                     CameraMode::Orbit => {
                         app_state.orbit_height += 0.15 * app_state.move_speed;
@@ -119,10 +116,7 @@ pub fn handle_input_event(app_state: &mut AppState, event: Event) -> AppResult<(
                 },
                 KeyCode::Down => match app_state.camera_mode {
                     CameraMode::Free => {
-                        camera::adjust_pitch(
-                            &mut app_state.camera,
-                            -0.08 * app_state.move_speed,
-                        );
+                        camera::adjust_pitch(&mut app_state.camera, -0.08 * app_state.move_speed);
                     }
                     CameraMode::Orbit => {
                         app_state.orbit_height -= 0.15 * app_state.move_speed;
@@ -130,10 +124,7 @@ pub fn handle_input_event(app_state: &mut AppState, event: Event) -> AppResult<(
                 },
                 KeyCode::Left => match app_state.camera_mode {
                     CameraMode::Free => {
-                        camera::adjust_yaw(
-                            &mut app_state.camera,
-                            -0.08 * app_state.move_speed,
-                        );
+                        camera::adjust_yaw(&mut app_state.camera, -0.08 * app_state.move_speed);
                     }
                     CameraMode::Orbit => {
                         // Manual orbit nudge (in addition to auto-orbit)
@@ -142,10 +133,7 @@ pub fn handle_input_event(app_state: &mut AppState, event: Event) -> AppResult<(
                 },
                 KeyCode::Right => match app_state.camera_mode {
                     CameraMode::Free => {
-                        camera::adjust_yaw(
-                            &mut app_state.camera,
-                            0.08 * app_state.move_speed,
-                        );
+                        camera::adjust_yaw(&mut app_state.camera, 0.08 * app_state.move_speed);
                     }
                     CameraMode::Orbit => {
                         app_state.orbit_angle += 0.1 * app_state.move_speed;

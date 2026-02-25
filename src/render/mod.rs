@@ -45,7 +45,8 @@ pub fn rgb_to_ansi256(r: u8, g: u8, b: u8) -> u8 {
     let bi0 = ((b as f32 / 255.0 * 5.0) + 0.5) as i8;
 
     let mut best_cube_idx: u8 = 16 + 36 * ri0 as u8 + 6 * gi0 as u8 + bi0 as u8;
-    let mut best_cube_dist = perceptual_dist_sq(r, g, b, ri0 as u8 * 51, gi0 as u8 * 51, bi0 as u8 * 51);
+    let mut best_cube_dist =
+        perceptual_dist_sq(r, g, b, ri0 as u8 * 51, gi0 as u8 * 51, bi0 as u8 * 51);
 
     for dr in -1i8..=1 {
         for dg in -1i8..=1 {

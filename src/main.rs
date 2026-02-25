@@ -28,7 +28,11 @@ use terminal_setup::{cleanup_terminal, install_panic_hook};
 pub type AppResult<T> = Result<T, Box<dyn std::error::Error>>;
 
 #[derive(Debug, Parser)]
-#[command(name = "tortuise", version, about = "Terminal-native 3D Gaussian Splatting viewer")]
+#[command(
+    name = "tortuise",
+    version,
+    about = "Terminal-native 3D Gaussian Splatting viewer"
+)]
 struct Cli {
     /// Path to a .ply or .splat scene file
     input: Option<PathBuf>,
@@ -81,7 +85,10 @@ fn load_splats_from_cli(cli: &Cli) -> AppResult<Vec<splat::Splat>> {
         return Ok(demo::generate_demo_splats());
     }
 
-    let path = cli.input.as_ref().expect("input is Some; checked before dispatch");
+    let path = cli
+        .input
+        .as_ref()
+        .expect("input is Some; checked before dispatch");
 
     let ext = path
         .extension()
@@ -143,7 +150,9 @@ fn main() -> AppResult<()> {
         Err(_) => match std::env::var("TERM_PROGRAM") {
             Ok(prog) => prog != "Apple_Terminal",
             Err(_) => match std::env::var("TERM") {
-                Ok(term) => term.contains("ghostty") || term.contains("kitty") || term.contains("wezterm"),
+                Ok(term) => {
+                    term.contains("ghostty") || term.contains("kitty") || term.contains("wezterm")
+                }
                 Err(_) => false,
             },
         },

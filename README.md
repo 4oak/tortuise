@@ -126,19 +126,30 @@ Numbers in parentheses are splat counts. FPS is approximate and depends heavily 
 
 ## Where to get scenes
 
-The fastest way to get a real scene into tortuise is to grab one from [SuperSplat](https://superspl.at/) -- thousands of community-uploaded Gaussian splat scenes. The included `scripts/supersplat-dl.sh` downloads and converts any SuperSplat scene to a standard PLY in one command:
+### SuperSplat (recommended)
+
+The fastest way to get a real scene is from [SuperSplat](https://superspl.at/) -- thousands of community-uploaded Gaussian splat scenes. The included download script handles everything:
 
 ```bash
-# Download a SuperSplat scene (paste any share URL or scene ID)
+# Download any SuperSplat scene — paste a share URL, scene page URL, or bare ID
+./scripts/supersplat-dl.sh "https://superspl.at/scene/d281f99f" ramen.ply
 ./scripts/supersplat-dl.sh "https://superspl.at/s?id=cf6ac78e" bee.ply
+./scripts/supersplat-dl.sh cf6ac78e bee.ply
 
 # View it
-tortuise bee.ply
+tortuise ramen.ply
 ```
 
-Requires **Node.js 16+** and **curl** (for `npx @playcanvas/splat-transform` under the hood).
+The script auto-detects the scene format and handles both legacy (compressed PLY) and modern (SOG) SuperSplat scenes. No Node.js required — conversion is pure Python.
 
-Other sources:
+**Requirements:** Python 3.8+, curl. For SOG scenes (most scenes uploaded after mid-2025), you also need Pillow and numpy:
+
+```bash
+pip install -r scripts/requirements.txt
+```
+
+### Other sources
+
 - `tortuise --demo` -- instant built-in demo scene, no downloads required
 - [Polycam](https://poly.cam/explore) -- photogrammetry captures, some with Gaussian splat export
 - [nerfstudio](https://docs.nerf.studio/) -- train your own splats from video, exports to .ply

@@ -74,7 +74,7 @@ OUTPUT="${POSITIONAL[1]:-}"
 
 # ── Dependency checks ────────────────────────────────────────────────────────
 
-for cmd in node npx curl gunzip; do
+for cmd in python3 curl gunzip; do
     command -v "$cmd" >/dev/null 2>&1 || die "${cmd} is required but not found in PATH"
 done
 
@@ -123,54 +123,53 @@ GZIPPED_PATH="${TMPDIR_CREATED}/scene.compressed.ply.gz"
 DECOMPRESSED_PATH="${TMPDIR_CREATED}/scene.compressed.ply"
 CONVERTED_PATH="${TMPDIR_CREATED}/output.ply"
 
-# ── Download ─────────────────────────────────────────────────────────────────
+# ── Resolve script directory ─────────────────────────────────────────────────
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# ── Try compressed PLY first, fall back to SOG ──────────────────────────────
 
 DOWNLOAD_URL="${CDN_BASE}/${SCENE_ID}/v1/${COMPRESSED_FILE}"
-info "downloading: ${DOWNLOAD_URL}"
+info "trying compressed PLY: ${DOWNLOAD_URL}"
 
 CURL_STDERR="${TMPDIR_CREATED}/curl_stderr"
-HTTP_CODE="$(curl -sS -w "%{http_code}" -o "${GZIPPED_PATH}" "${DOWNLOAD_URL}" 2>"${CURL_STDERR}")" || {
-    CURL_ERR="$(cat "${CURL_STDERR}" 2>/dev/null)"
-    die "download failed: ${CURL_ERR:-unknown curl error}. URL: ${DOWNLOAD_URL}"
-}
+HTTP_CODE="$(curl -sS -w "%{http_code}" -o "${GZIPPED_PATH}" "${DOWNLOAD_URL}" 2>"${CURL_STDERR}")" || HTTP_CODE="000"
 
-if [[ "${HTTP_CODE}" != "200" ]]; then
-    die "download failed with HTTP ${HTTP_CODE}. URL: ${DOWNLOAD_URL}"
-fi
+if [[ "${HTTP_CODE}" == "200" ]]; then
+    # ── Legacy path: compressed PLY ──────────────────────────────────────
+    DOWNLOAD_SIZE="$(wc -c < "${GZIPPED_PATH}" | tr -d ' ')"
+    info "downloaded: ${DOWNLOAD_SIZE} bytes"
 
-DOWNLOAD_SIZE="$(wc -c < "${GZIPPED_PATH}" | tr -d ' ')"
-if [[ "${DOWNLOAD_SIZE}" -lt 100 ]]; then
-    die "downloaded file is suspiciously small (${DOWNLOAD_SIZE} bytes) — scene may not exist"
-fi
-
-info "downloaded: ${DOWNLOAD_SIZE} bytes"
-
-# ── Decompress gzip layer ────────────────────────────────────────────────────
-# SuperSplat CDN serves gzip-compressed files (gzip wrapping a PlayCanvas
-# compressed PLY). We must gunzip before splat-transform can read the header.
-
-# Check if the file is gzip-compressed (magic bytes 1f 8b)
-MAGIC="$(od -An -tx1 -N2 "${GZIPPED_PATH}" | tr -d ' \n')"
-if [[ "${MAGIC}" == "1f8b" ]]; then
-    info "decompressing gzip layer..."
-    if ! gunzip -c "${GZIPPED_PATH}" > "${DECOMPRESSED_PATH}"; then
-        die "gzip decompression failed"
+    # Decompress gzip layer if present
+    MAGIC="$(od -An -tx1 -N2 "${GZIPPED_PATH}" | tr -d ' \n')"
+    if [[ "${MAGIC}" == "1f8b" ]]; then
+        info "decompressing gzip layer..."
+        if ! gunzip -c "${GZIPPED_PATH}" > "${DECOMPRESSED_PATH}"; then
+            die "gzip decompression failed"
+        fi
+        info "decompressed: $(wc -c < "${DECOMPRESSED_PATH}" | tr -d ' ') bytes"
+    else
+        mv "${GZIPPED_PATH}" "${DECOMPRESSED_PATH}"
     fi
-    COMPRESSED_SIZE="$(wc -c < "${DECOMPRESSED_PATH}" | tr -d ' ')"
-    info "decompressed: ${COMPRESSED_SIZE} bytes (PlayCanvas compressed PLY)"
+
+    # Convert compressed PLY → standard PLY
+    CONVERT_PY="${SCRIPT_DIR}/convert.py"
+    info "converting compressed PLY → standard PLY..."
+    if ! python3 "${CONVERT_PY}" "${DECOMPRESSED_PATH}" "${CONVERTED_PATH}" 2>&1; then
+        die "conversion failed. The compressed PLY may be malformed."
+    fi
 else
-    # Not gzipped — use as-is
-    mv "${GZIPPED_PATH}" "${DECOMPRESSED_PATH}"
-    COMPRESSED_SIZE="${DOWNLOAD_SIZE}"
-    info "file is not gzipped, using as-is"
-fi
+    # ── SOG path: newer scenes use WebP-based format ─────────────────────
+    info "compressed PLY not available (HTTP ${HTTP_CODE}), trying SOG format..."
 
-# ── Convert ──────────────────────────────────────────────────────────────────
+    SOG_CONVERT_PY="${SCRIPT_DIR}/sog_convert.py"
+    if [[ ! -f "${SOG_CONVERT_PY}" ]]; then
+        die "sog_convert.py not found at ${SOG_CONVERT_PY}"
+    fi
 
-info "converting with @playcanvas/splat-transform..."
-
-if ! npx --yes @playcanvas/splat-transform "${DECOMPRESSED_PATH}" "${CONVERTED_PATH}" 2>&1; then
-    die "conversion failed. The compressed PLY may be malformed or the tool version may be incompatible."
+    if ! python3 "${SOG_CONVERT_PY}" "${SCENE_ID}" "${CONVERTED_PATH}" 2>&1; then
+        die "SOG conversion failed. Scene may not exist or format is unsupported."
+    fi
 fi
 
 if [[ ! -f "${CONVERTED_PATH}" ]]; then
@@ -240,4 +239,4 @@ fi
 
 # ── Summary ──────────────────────────────────────────────────────────────────
 
-info "done! ${DOWNLOAD_SIZE} bytes (download) -> ${CONVERTED_SIZE} bytes (standard PLY) — ${VERTEX_COUNT:-?} vertices"
+info "done! ${CONVERTED_SIZE} bytes (standard PLY) — ${VERTEX_COUNT:-?} vertices"

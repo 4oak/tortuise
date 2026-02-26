@@ -9,7 +9,7 @@ Gaussian splats viewer that works in your terminal. Yes, it's made of symbols!
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Linux-lightgrey)
 
-A CPU-first 3D Gaussian Splatting viewer inspired by [ratatui](https://github.com/ratatui/ratatui), built on [crossterm](https://github.com/crossterm-rs/crossterm). Fully parallelized rendering pipeline via [rayon](https://github.com/rayon-rs/rayon), perceptual color mapping, six render modes — all running on pure CPU. Real scenes with 1.1M splats hold 10–25 FPS. No GPU required. Works on potato.
+A CPU-first 3D Gaussian Splatting viewer inspired by [ratatui](https://github.com/ratatui/ratatui), built on [crossterm](https://github.com/crossterm-rs/crossterm). Fully parallelized rendering pipeline via [rayon](https://github.com/rayon-rs/rayon), perceptual color mapping, six render modes — all running on pure CPU. Real scenes with 1.1M splats hold 10–25 FPS. No GPU required. Works on potato. Scenes [download](#where-to-get-scenes) included!
 
 <!-- Demo recorded in Ghostty, halfblock mode, no Kitty graphics protocol — pure Unicode characters -->
 
@@ -58,6 +58,11 @@ tortuise your-scene.ply
 # Some scenes need axis flips depending on capture coordinate system
 tortuise --flip-y scene.ply
 tortuise --flip-z scene.splat
+
+# Don't have a scene file? Download one from SuperSplat
+pip install Pillow numpy  # needed once, for SOG scene format
+./scripts/supersplat-dl.sh "https://superspl.at/scene/d281f99f" ramen.ply
+tortuise ramen.ply
 ```
 
 ### CLI options

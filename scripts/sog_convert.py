@@ -105,9 +105,30 @@ def collect_file_references(obj: Any) -> List[str]:
     return deduped
 
 
+def discover_scene_version(scene_id: str) -> int:
+    """Probe CDN to find the correct version for a scene (v1, v2, ... v10)."""
+    for v in range(1, 11):
+        url = f"{CDN_BASE}/{scene_id}/v{v}/meta.json"
+        req = urllib.request.Request(url, method="HEAD")
+        try:
+            with urllib.request.urlopen(req, timeout=10):
+                return v
+        except urllib.error.HTTPError:
+            continue
+        except urllib.error.URLError:
+            continue
+    raise RuntimeError(
+        f"Could not find meta.json for scene {scene_id} at any version (v1–v10). "
+        "Scene may not exist or may not be in SOG format."
+    )
+
+
 def download_scene(scene_id: str, temp_dir: str) -> str:
     scene_id = scene_id.lower()
-    meta_url = f"{CDN_BASE}/{scene_id}/v3/meta.json"
+    version = discover_scene_version(scene_id)
+    base = f"{CDN_BASE}/{scene_id}/v{version}"
+
+    meta_url = f"{base}/meta.json"
     log(f"Downloading meta.json: {meta_url}")
     meta_bytes = fetch_bytes(meta_url)
 
@@ -122,7 +143,7 @@ def download_scene(scene_id: str, temp_dir: str) -> str:
 
     file_names = collect_file_references(meta)
     for filename in file_names:
-        file_url = f"{CDN_BASE}/{scene_id}/v3/{filename}"
+        file_url = f"{base}/{filename}"
         log(f"Downloading {filename}: {file_url}")
         content = fetch_bytes(file_url)
         out_path = os.path.join(temp_dir, filename)

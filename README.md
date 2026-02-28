@@ -2,10 +2,10 @@
 
 Gaussian splats viewer that works in your terminal. Yes, it's made of symbols!
 
-![tortuise demo](https://raw.githubusercontent.com/buildoak/tortuise/main/assets/demo.webp)
+![tortuise demo](https://raw.githubusercontent.com/4oak/tortuise/main/assets/demo.webp)
 
 [![crates.io](https://img.shields.io/crates/v/tortuise.svg)](https://crates.io/crates/tortuise)
-[![CI](https://github.com/buildoak/tortuise/actions/workflows/ci.yml/badge.svg)](https://github.com/buildoak/tortuise/actions/workflows/ci.yml)
+[![CI](https://github.com/4oak/tortuise/actions/workflows/ci.yml/badge.svg)](https://github.com/4oak/tortuise/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Linux-lightgrey)
 
@@ -41,7 +41,7 @@ Inspiration by [ratatui](https://github.com/ratatui/ratatui) merged with binge w
 cargo install tortuise
 
 # Or build from source
-git clone https://github.com/buildoak/tortuise.git
+git clone https://github.com/4oak/tortuise.git
 cd tortuise
 cargo install --path .
 

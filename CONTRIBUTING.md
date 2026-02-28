@@ -7,7 +7,7 @@ Contributions welcome. No CLA, no process overhead.
 Requires Rust 1.80+.
 
 ```bash
-git clone https://github.com/buildoak/tortuise.git
+git clone https://github.com/4oak/tortuise.git
 cd tortuise
 cargo build --release
 ```
